@@ -1,0 +1,24 @@
+schema {
+  mutation: Mutation
+  subscription: Subscription
+}
+
+type Mutation {
+  unrankedSoloMatch(player1: String!, player2: String!): SinglesMatchNotification @aws_iam
+}
+
+type Subscription {
+  joinUnrankedSoloQueue(userId: String!): SinglesMatchNotification @aws_subscription(mutations: ["unrankedSoloMatch"])
+}
+
+type SinglesMatchNotification {
+  sessionId: String!
+  userId: String!
+  opponent: Opponent!
+}
+
+type Opponent {
+  userId: String!
+  username: String!
+  ip: AWSIPAddress!
+}

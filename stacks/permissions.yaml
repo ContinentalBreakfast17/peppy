@@ -1,0 +1,264 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  This template provisions IAM permissions needed to deploy the terraform for this solution.
+Parameters:
+  Prefix:
+    Type: String
+    Description: Prefix or Path for resources
+    Default: "slippi-api"
+  InfraAdminGroupName:
+    Type: String
+    Description: Name to give IAM group for infra admins
+    Default: "infra-admins"
+  InfraAdminPolicyPrefix:
+    Type: String
+    Description: Prefix for names for IAM policies for infra admins
+    Default: "infra-admin"
+
+  TfStateBucketArn:
+    Type: String
+  TfStateBucketKey:
+    Type: String
+  TfStateTableArn:
+    Type: String
+
+Resources:
+  InfraAdminGroup:
+    Type: AWS::IAM::Group
+    Properties:
+      GroupName: !Ref InfraAdminGroupName
+      Path: !Sub "/${Prefix}/"
+      ManagedPolicyArns:
+        - !Ref InfraAdminPolicy1
+
+  InfraAdminPolicy1:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: !Sub "${InfraAdminPolicyPrefix}-1"
+      Path: !Sub "/${Prefix}/"
+      Description: "Policy that allows Slippi API deployment"
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          ## tfstate
+          - Effect: Allow
+            Action:
+              - s3:ListBucket
+            Resource:
+              - !Ref TfStateBucketArn
+
+          - Effect: Allow
+            Action:
+              - s3:GetObject
+              - s3:PutObject
+            Resource:
+              - !Sub "${TfStateBucketArn}/${TfStateBucketKey}"
+
+          - Effect: Allow
+            Action:
+              - dynamodb:GetItem
+              - dynamodb:PutItem
+              - dynamodb:DeleteItem
+            Resource:
+              - !Ref TfStateTableArn
+
+          ## dynamodb
+          - Effect: Allow
+            Action:
+              - dynamodb:ListGlobalTables
+              - dynamodb:ListTables
+            Resource:
+              - "*"
+
+          - Effect: Allow
+            Action:
+              - dynamodb:CreateGlobalTable
+              - dynamodb:DescribeGlobalTable*
+              - dynamodb:UpdateGlobalTable*
+            Resource:
+              - !Sub "arn:aws:dynamodb::${AWS::AccountId}:global-table/${Prefix}*"
+
+          - Effect: Allow
+            Action:
+              - dynamodb:CreateGlobalTable
+              - dynamodb:CreateTable
+              - dynamodb:CreateTableReplica
+              - dynamodb:DeleteTable
+              - dynamodb:DescribeContinuousBackups
+              - dynamodb:DescribeTable
+              - dynamodb:DescribeTimeToLive
+              - dynamodb:ListTagsOfResource
+              - dynamodb:Query # idk why replication needs this...
+              - dynamodb:Scan # idk why replication needs this...
+              - dynamodb:TagResource
+              - dynamodb:UntagResource
+              - dynamodb:UpdateContinuousBackups
+              - dynamodb:UpdateGlobalTable*
+              - dynamodb:*Item # idk why replication needs this...
+              - dynamodb:UpdateTable
+              - dynamodb:UpdateTimeToLive
+            Resource:
+              - !Sub "arn:aws:dynamodb:*:${AWS::AccountId}:table/${Prefix}*"
+
+          ## iam
+          - Effect: Allow
+            Action:
+              - iam:ListAccountAliases
+              - iam:ListPolicies
+              - iam:ListRoles
+            Resource:
+              - "*"
+
+          - Effect: Allow
+            Action:
+              - iam:GetGroup
+            Resource:
+              - !Sub "arn:aws:iam::${AWS::AccountId}:group/${Prefix}*"
+
+          - Effect: Allow
+            Action:
+              - iam:CreateServiceLinkedRole
+            Resource:
+              - !Sub "arn:aws:iam::${AWS::AccountId}:role/aws-service-role/mrk.kms.amazonaws.com/AWSServiceRoleForKeyManagementServiceMultiRegionKeys"
+
+          - Effect: Allow
+            Action:
+              - iam:AttachRolePolicy
+            Resource:
+              - !Sub "arn:aws:iam::${AWS::AccountId}:role/aws-service-role/mrk.kms.amazonaws.com/AWSServiceRoleForKeyManagementServiceMultiRegionKeys"
+            Condition:
+              ForAnyValue:ArnLike:
+                iam:PolicyArn:
+                  - "arn:aws:iam::aws:policy/aws-service-role/AWSKeyManagementServiceMultiRegionKeysServiceRolePolicy"
+
+          - Effect: Allow
+            Action:
+              - iam:AttachRolePolicy
+              - iam:CreatePolicy*
+              - iam:CreateRole
+              - iam:DeleteRole
+              - iam:DeletePolicy*
+              - iam:DeleteRole*
+              - iam:DetachRolePolicy
+              - iam:GetPolicy*
+              - iam:GetRole*
+              - iam:ListAttachedRolePolicies
+              - iam:ListPolicy*
+              - iam:ListRole*
+              - iam:PassRole
+              - iam:PutRole*
+              - iam:Tag*
+              - iam:Untag*
+              - iam:UpdateAssumeRolePolicy
+              - iam:UpdateRole*
+            Resource:
+              - !Sub "arn:aws:iam::${AWS::AccountId}:policy/${Prefix}*"
+              - !Sub "arn:aws:iam::${AWS::AccountId}:role/${Prefix}*"
+
+          ## kms
+          - Effect: Allow
+            Action:
+              - kms:List*
+              - kms:CreateKey
+            Resource:
+              - "*"
+
+          - Effect: Allow
+            Action:
+              - kms:CancelKeyDeletion
+              - kms:CreateAlias
+              - kms:DescribeKey
+              - kms:DeleteKey
+              - kms:DeleteAlias
+              - kms:DisableKey
+              - kms:EnableKey*
+              - kms:GetKeyPolicy
+              - kms:GetKeyRotationStatus
+              - kms:PutKeyPolicy
+              - kms:ReplicateKey
+              - kms:ScheduleKeyDeletion
+              - kms:TagResource
+              - kms:UntagResource
+              - kms:UpdateKeyDescription
+              - kms:UpdatePrimaryRegion
+            Resource:
+              # consider tag limtation on key resource
+              - !Sub "arn:aws:kms:*:${AWS::AccountId}:key/*"
+              - !Sub "arn:aws:kms:*:${AWS::AccountId}:alias/${Prefix}*"
+
+          - Effect: Allow
+            Action:
+              - kms:CreateGrant
+              - kms:Decrypt
+              - kms:Encrypt
+              - kms:GenerateDataKey*
+            Resource:
+              - !Sub "arn:aws:kms:*:${AWS::AccountId}:key/*"
+              # - !Sub "arn:aws:kms:*:${AWS::AccountId}:alias/${Prefix}*"
+            Condition:
+              ForAnyValue:StringLike:
+                kms:ResourceAliases:
+                  - !Sub "alias/${Prefix}*"
+
+          ## lambda
+          - Effect: Allow
+            Action:
+              - lambda:*FunctionConcurrency
+              - lambda:AddPermission
+              - lambda:Create*
+              - lambda:Delete*
+              - lambda:Get*
+              - lambda:InvokeFunction
+              - lambda:List*
+              - lambda:PublishVersion
+              - lambda:RemovePermission
+              - lambda:TagResource
+              - lambda:UntagResource
+              - lambda:Update*
+            Resource:
+              - !Sub "arn:aws:lambda:*:${AWS::AccountId}:function:${Prefix}*"
+
+          ## logs
+          - Effect: Allow
+            Action:
+              - logs:DescribeLogGroups
+            Resource:
+              - !Sub "arn:aws:logs:*:${AWS::AccountId}:*"
+
+          - Effect: Allow
+            Action:
+              - logs:CreateLogGroup
+              - logs:DeleteLogGroup
+              - logs:ListTagsLogGroup
+              - logs:PutRetentionPolicy
+              - logs:TagLogGroup
+              - logs:UntagLogGroup
+            Resource:
+              - !Sub "arn:aws:logs:*:${AWS::AccountId}:log-group:${Prefix}*"
+              - !Sub "arn:aws:logs:*:${AWS::AccountId}:log-group:/aws/lambda/${Prefix}*"
+
+          ## secrets manager
+          - Effect: Allow
+            Action:
+              - secretsmanager:GetRandomPassword
+              - secretsmanager:ListSecrets
+            Resource:
+              - "*"
+
+          - Effect: Allow
+            Action:
+              - secretsmanager:CreateSecret
+              - secretsmanager:DeleteSecret
+              - secretsmanager:DeleteResourcePolicy
+              - secretsmanager:DescribeSecret
+              - secretsmanager:GetResourcePolicy
+              - secretsmanager:PutResourcePolicy
+              - secretsmanager:RemoveRegionsFromReplication
+              - secretsmanager:ReplicateSecretToRegions
+              - secretsmanager:StopReplicationToReplica
+              - secretsmanager:TagResource
+              - secretsmanager:UntagResource
+              - secretsmanager:UpdateSecret
+              - secretsmanager:ValidateResourcePolicy
+            Resource:
+              - !Sub "arn:aws:secretsmanager:*:${AWS::AccountId}:secret:${Prefix}*"

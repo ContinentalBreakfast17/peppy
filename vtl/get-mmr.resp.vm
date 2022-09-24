@@ -1,0 +1,14 @@
+#set ($function = "GetMmr")
+
+#if ($ctx.error)
+  $util.log.error({
+    "user": $ctx.stash.user,
+    "function": $function,
+    "code": "Failure",
+    "error": $ctx.error
+  })
+  $util.error("Failed to lookup user's mmr")
+#else
+  $util.quiet($ctx.stash.put("mmr", $ctx.result.value))
+  #return ($util.toJson($ctx.result))
+#end

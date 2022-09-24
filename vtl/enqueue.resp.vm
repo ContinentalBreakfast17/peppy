@@ -1,0 +1,13 @@
+#set ($function = "JoinQueue")
+
+#if ($ctx.error)
+  $util.log.error({
+    "user": $ctx.stash.user,
+    "function": $function,
+    "code": "Failure",
+    "error": $ctx.error,
+  })
+  $util.error("Failed to join queue")
+#else
+  #return ($util.toJson($ctx.result))
+#end

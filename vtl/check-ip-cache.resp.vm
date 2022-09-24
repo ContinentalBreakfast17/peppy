@@ -1,0 +1,29 @@
+#set ($function = "IpCacheCheck")
+
+#if ($ctx.result)
+  ## ip found in cache
+  $util.log.info({
+    "user": $ctx.stash.user,
+    "function": $function,
+    "code": "Hit",
+  })
+  $util.quiet($ctx.stash.put("location_cache"), $ctx.result)
+  #return ($util.toJson($ctx.result))
+#elseif ($ctx.error)
+  ## failed to check cache
+  $util.log.error({
+    "user": $ctx.stash.user,
+    "function": $function,
+    "code": "Failure",
+    "error": $ctx.error,
+  })
+  #return (null)
+#else
+  ## ip not in cache
+  $util.log.info({
+    "user": $ctx.stash.user,
+    "function": $function,
+    "code": "Hit",
+  })
+  #return (null)
+#end

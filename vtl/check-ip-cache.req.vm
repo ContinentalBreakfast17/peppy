@@ -1,0 +1,10 @@
+#set ($forwardHeader = "${ctx.request.headers.X-Forwarded-For}")
+#set ($commaIndex = $forwardHeader.indexOf(','))
+$util.quiet($ctx.stash.put("ip", $forwardHeader.substring(0, $commaIndex)))
+{
+  "version": "2017-02-28",
+  "operation": "GetItem",
+  "key": {
+    "ip": $util.dynamodb.toDynamoDBJson($ctx.stash.ip)
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "version": "2018-05-29",
+  "operation": "TransactWriteItems",
+  "transactItems": [
+  #foreach($dequeue_table in $ctx.stash.dequeue_tables)
+    {
+      "table": $util.toJson($dequeue_table),
+      "operation": "DeleteItem",
+      "key": {
+        "version": $util.dynamodb.toDynamoDBJson($ctx.stash.queue_version),
+        "user": $util.dynamodb.toDynamoDBJson($ctx.stash.user)
+      }
+    },
+  #end
+    {
+      "table": $util.toJson($ctx.stash.queue_table),
+      "operation": "PutItem",
+      "key": {
+        "version": $util.dynamodb.toDynamoDBJson($ctx.stash.queue_version),
+        "user": $util.dynamodb.toDynamoDBJson($ctx.stash.user)
+      },
+      "attributeValues": {
+        "ip": $util.dynamodb.toDynamoDBJson($ctx.stash.ip),
+        "coordinates": $util.dynamodb.toDynamoDBJson($ctx.stash.location_cache.coordinates),
+        "mmr": $util.dynamodb.toDynamoDBJson($ctx.stash.mmr),
+        "ttl": $util.dynamodb.toDynamoDBJson($util.nowEpochSeconds() + (60 * 5)),
+      }
+    }
+  ]
+}
