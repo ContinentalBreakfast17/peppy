@@ -1,6 +1,15 @@
+#if ($util.isNull($ctx.request.headers.X-Forwarded-For))
+  $util.error("No forwarded-for header")
+#end
+
 #set ($forwardHeader = "${ctx.request.headers.X-Forwarded-For}")
 #set ($commaIndex = $forwardHeader.indexOf(','))
-$util.quiet($ctx.stash.put("ip", $forwardHeader.substring(0, $commaIndex)))
+#if ($commaIndex < 0)
+  $util.quiet($ctx.stash.put("ip", $forwardHeader))
+#else
+  $util.quiet($ctx.stash.put("ip", $forwardHeader.substring(0, $commaIndex)))
+#end
+
 {
   "version": "2017-02-28",
   "operation": "GetItem",

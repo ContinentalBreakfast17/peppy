@@ -1,11 +1,11 @@
 #if (!$util.isNull($ctx.stash.location_cache))
   ## value already in cache, do nothing
-  #return ($util.toJson($ctx.stash.location_cache))    
+  #return ($util.toJson($ctx.stash.location))    
 #end
 {
     "version": "2018-05-29",
     "operation": "Invoke",
     "payload": {
-        "ip": $ctx.toJson($ctx.stash.ip)
+        "ip": $util.toJson($ctx.stash.ip)
     }
 }

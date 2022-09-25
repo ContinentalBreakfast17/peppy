@@ -1,20 +1,18 @@
 #set ($function = "CacheIp")
 
-#if ($ctx.error)
+#if ($util.isNull($ctx.result))
   $util.log.error({
     "user": $ctx.stash.user,
     "function": $function,
     "code": "Failure",
-    "error": $ctx.error,
+    "error": $ctx.error
   })
-  $util.quiet($ctx.stash.put("location_cache"), $ctx.prev)
-  #return ($util.toJson($ctx.prev))
+  #return ($util.toJson($ctx.stash.location))
 #else
   $util.log.info({
     "user": $ctx.stash.user,
     "function": $function,
-    "code": "Success",
+    "code": "Success"
   })
-  $util.quiet($ctx.stash.put("location_cache"), $ctx.result)
   #return ($util.toJson($ctx.result))
 #end

@@ -1,6 +1,7 @@
 #set ($function = "GetMmr")
 
-#if ($ctx.error)
+#if ($util.isNull($ctx.result))
+  ## todo: we should maybe init mmr here?
   $util.log.error({
     "user": $ctx.stash.user,
     "function": $function,

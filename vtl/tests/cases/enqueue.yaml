@@ -1,0 +1,111 @@
+tests:
+  # request checks
+  - name: Req - Multi Dequeue
+    file: &req-file enqueue.req.vm
+    context:
+      stash:
+        ip: "1.2.3.4"
+        queue_table: q_table
+        dequeue_tables:
+          - dq_table1
+          - dq_table2
+        queue_version: v1
+        user: abc#123
+        location_cache:
+          coordinates:
+            lat: 10
+            long: -10
+        entry_time: 100
+        mmr: 1800
+    expect:
+      version: '2018-05-29'
+      operation: TransactWriteItems
+      transactItems:
+      - table: dq_table1
+        operation: DeleteItem
+        key:
+          version:
+            S: v1
+          user:
+            S: abc#123
+      - table: dq_table2
+        operation: DeleteItem
+        key:
+          version:
+            S: v1
+          user:
+            S: abc#123
+      - table: q_table
+        operation: PutItem
+        key:
+          version:
+            S: v1
+          user:
+            S: abc#123
+        attributeValues:
+          ip:
+            S: "1.2.3.4"
+          coordinates:
+            M:
+              lat:
+                N: 10
+              long:
+                N: -10
+          mmr:
+            N: 1800
+          ttl:
+            N: 400
+  - name: Req - No Dequeue
+    file: *req-file
+    context:
+      stash:
+        ip: "1.2.3.4"
+        queue_table: q_table
+        # dequeue_tables: []
+        queue_version: v1
+        user: abc#123
+        location_cache:
+          coordinates:
+            lat: 10
+            long: -10
+        entry_time: 100
+        mmr: 1800
+    expect:
+      version: '2018-05-29'
+      operation: TransactWriteItems
+      transactItems:
+      - table: q_table
+        operation: PutItem
+        key:
+          version:
+            S: v1
+          user:
+            S: abc#123
+        attributeValues:
+          ip:
+            S: "1.2.3.4"
+          coordinates:
+            M:
+              lat:
+                N: 10
+              long:
+                N: -10
+          mmr:
+            N: 1800
+          ttl:
+            N: 400
+
+  # response checks
+  - name: Resp - Success
+    file: &resp-file enqueue.resp.vm
+    context:
+      result: {}
+    expect: {}
+
+  - name: Resp - Error
+    file: *resp-file
+    context:
+      error:
+        message: error
+        type: error
+    error: true

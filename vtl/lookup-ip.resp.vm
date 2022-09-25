@@ -1,13 +1,14 @@
 #set ($function = "IpLookup")
 
-#if ($ctx.error)
+#if ($util.isNull($ctx.result))
   $util.log.error({
     "user": $ctx.stash.user,
     "function": $function,
     "code": "Failure",
-    "error": $ctx.error,
+    "error": $ctx.error
   })
   $util.error("Failed to lookup user's ip address")
 #else
+  $util.quiet($ctx.stash.put("location"), $ctx.result)
   #return ($util.toJson($ctx.result))
 #end

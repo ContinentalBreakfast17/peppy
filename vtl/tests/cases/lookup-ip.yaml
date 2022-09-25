@@ -1,0 +1,35 @@
+tests:
+  # request checks
+  - name: Req - Cache Hit
+    file: &req-file lookup-ip.req.vm
+    context:
+      stash:
+        location_cache: true
+        location: {}
+    expect: {}
+
+  - name: Req - Cache Miss
+    file: *req-file
+    context:
+      stash:
+        ip: "1.2.3.4"
+    expect:
+      version: "2018-05-29"
+      operation: Invoke
+      payload: 
+        ip: "1.2.3.4"
+
+  # response checks
+  - name: Resp - Success
+    file: &resp-file lookup-ip.resp.vm
+    context:
+      result: {}
+    expect: {}
+
+  - name: Resp - Error
+    file: *resp-file
+    context:
+      error:
+        message: error
+        type: error
+    error: true

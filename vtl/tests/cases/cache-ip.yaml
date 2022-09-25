@@ -1,0 +1,53 @@
+tests:
+  # request checks
+  - name: Req - Cached
+    file: &req-file cache-ip.req.vm
+    context:
+      stash:
+        location_cache: true
+        location:
+          some-key: some-value
+    expect:
+      some-key: some-value
+  - name: Req - Not Cached
+    file: *req-file
+    context:
+      stash:
+        ip: "1.2.3.4"
+        entry_time: 100
+        location:
+          some-key: some-value
+    expect:
+      version: "2018-05-29"
+      operation: "PutItem"
+      key:
+        ip:
+          S: "1.2.3.4"
+      attributeValues:
+        M:
+          ttl:
+            N: 604900
+          some-key:
+            S: "some-value"
+
+  # response checks
+  - name: Resp - Success
+    file: &resp-file cache-ip.resp.vm
+    context:
+      result:
+        some-key: some-value
+    expect:
+      some-key: some-value
+
+  - name: Resp - Error
+    file: *resp-file
+    description: The ip cache function should pass the previous result through on error
+    context:
+      error:
+        message: error
+        type: error
+      stash:
+        location:
+          some-key: some-value
+    expect:
+      some-key: some-value

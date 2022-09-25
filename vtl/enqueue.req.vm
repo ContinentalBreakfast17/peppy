@@ -1,3 +1,4 @@
+#set( $ttl = $ctx.stash.entry_time + 300 )
 {
   "version": "2018-05-29",
   "operation": "TransactWriteItems",
@@ -23,7 +24,7 @@
         "ip": $util.dynamodb.toDynamoDBJson($ctx.stash.ip),
         "coordinates": $util.dynamodb.toDynamoDBJson($ctx.stash.location_cache.coordinates),
         "mmr": $util.dynamodb.toDynamoDBJson($ctx.stash.mmr),
-        "ttl": $util.dynamodb.toDynamoDBJson($util.nowEpochSeconds() + (60 * 5)),
+        "ttl": $util.dynamodb.toDynamoDBJson($ttl)
       }
     }
   ]

@@ -30,6 +30,7 @@ Resources:
       Path: !Sub "/${Prefix}/"
       ManagedPolicyArns:
         - !Ref InfraAdminPolicy1
+        - !Ref InfraAdminPolicy2
 
   InfraAdminPolicy1:
     Type: AWS::IAM::ManagedPolicy
@@ -262,3 +263,50 @@ Resources:
               - secretsmanager:ValidateResourcePolicy
             Resource:
               - !Sub "arn:aws:secretsmanager:*:${AWS::AccountId}:secret:${Prefix}*"
+
+  InfraAdminPolicy2:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: !Sub "${InfraAdminPolicyPrefix}-2"
+      Path: !Sub "/${Prefix}/"
+      Description: "Policy that allows Slippi API deployment"
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          ## appsync
+          - Effect: Allow
+            Action:
+              - appsync:*ApiCache
+              - appsync:*ApiKey
+              - appsync:*DataSource
+              - appsync:*Function
+              - appsync:*Resolver
+              - appsync:*Type
+              - appsync:CreateDomainName
+              - appsync:CreateGraphqlApi
+              - appsync:EvaluateMappingTemplate
+              - appsync:GetSchemaCreationStatus
+              - appsync:List*
+              - appsync:StartSchemaCreation
+            Resource:
+              - "*"
+              - !Sub "arn:aws:appsync:*:${AWS::AccountId}:*"
+
+          - Effect: Allow
+            Action:
+              - appsync:*GraphqlApi
+              - appsync:TagResource
+              - appsync:UntagResource
+            Resource:
+              - !Sub "arn:aws:appsync:*:${AWS::AccountId}:apis/${Prefix}*"
+
+          - Effect: Allow
+            Action:
+              - appsync:*DomainName
+              - appsync:AssociateApi
+              - appsync:DisassociateApi
+              - appsync:GetApiAssociation
+            Resource:
+              - !Sub "arn:aws:appsync:*:${AWS::AccountId}:domainnames/*"
+
+        ## event bus

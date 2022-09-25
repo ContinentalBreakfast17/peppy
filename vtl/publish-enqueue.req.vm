@@ -18,10 +18,10 @@
         {
           ## todo: consider dynamic name
           "Source": "Slippi",
-          "EventBusName": $util.toJson($ctx.stash.eventBus),
-          "Detail": $util.toJson($detail),
+          "EventBusName": $util.toJson($ctx.stash.event_bus),
+          "Detail": $util.toJson($util.toJson($detail)),
           ## this will contain the subscription name (i.e. joinUnrankedSoloQueue)
-          "DetailType": $util.toJson($ctx.info.fieldName)
+          "DetailType": $util.toJson($ctx.stash.mutation)
          }
       ]
     }

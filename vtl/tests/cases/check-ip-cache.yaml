@@ -1,0 +1,48 @@
+tests:
+  # request checks
+  - name: Req - Comma
+    file: &req-file check-ip-cache.req.vm
+    context:
+      request:
+        headers:
+          X-Forwarded-For: "1.2.3.4,5.6.7.8"
+    expect: &default-req-expect
+      version: "2017-02-28"
+      operation: "GetItem"
+      key:
+        ip:
+          S: "1.2.3.4"
+  - name: Req - No Comma
+    file: *req-file
+    context:
+      request:
+        headers:
+          X-Forwarded-For: "1.2.3.4"
+    expect: *default-req-expect
+  - name: Req - No Header
+    file: *req-file
+    context: {}
+    error: true
+
+  # response checks
+  - name: Resp - Cache Hit
+    file: &resp-file check-ip-cache.resp.vm
+    context:
+      result:
+        some-key: some-value
+    expect:
+      some-key: some-value
+
+  - name: Resp - Cache Miss
+    file: *resp-file
+    context:
+      result: null
+    expect: null
+
+  - name: Resp - Error
+    file: *resp-file
+    context:
+      error:
+        message: error
+        type: error
+    expect: null

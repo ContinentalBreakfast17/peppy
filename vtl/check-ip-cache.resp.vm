@@ -5,9 +5,10 @@
   $util.log.info({
     "user": $ctx.stash.user,
     "function": $function,
-    "code": "Hit",
+    "code": "Hit"
   })
-  $util.quiet($ctx.stash.put("location_cache"), $ctx.result)
+  $util.quiet($ctx.stash.put("location"), $ctx.result)
+  $util.quiet($ctx.stash.put("location_cache"), true)
   #return ($util.toJson($ctx.result))
 #elseif ($ctx.error)
   ## failed to check cache
@@ -15,15 +16,15 @@
     "user": $ctx.stash.user,
     "function": $function,
     "code": "Failure",
-    "error": $ctx.error,
+    "error": $ctx.error
   })
-  #return (null)
+  #return
 #else
   ## ip not in cache
   $util.log.info({
     "user": $ctx.stash.user,
     "function": $function,
-    "code": "Hit",
+    "code": "Hit"
   })
-  #return (null)
+  #return
 #end

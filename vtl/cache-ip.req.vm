@@ -1,13 +1,15 @@
 #if (!$util.isNull($ctx.stash.location_cache))
   ## value already in cache, do nothing
-  #return ($util.toJson($ctx.stash.location_cache))    
+  #return ($util.toJson($ctx.stash.location))    
 #end
-$util.quiet($ctx.prev.put("ttl", $util.nowEpochSeconds() + (60 * 60 * 24 * 7)))
+## 604800 == seconds in a week
+#set( $ttl = $ctx.stash.entry_time + 604800 )
+$util.quiet($ctx.stash.location.put("ttl", $ttl))
 {
   "version": "2018-05-29",
   "operation": "PutItem",
   "key": {
     "ip": $util.dynamodb.toDynamoDBJson($ctx.stash.ip)
   },
-  "attributeValues": $util.dynamodb.toDynamoDBJson($ctx.prev)
+  "attributeValues": $util.dynamodb.toDynamoDBJson($ctx.stash.location)
 }

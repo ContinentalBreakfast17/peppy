@@ -1,14 +1,14 @@
 #set ($function = "PublishEnqueue")
 
 ## note: skipping errors under the assumption that another user will trigger the event bus anyway
-#if ($ctx.error)
+#if ($util.isNull($ctx.result) || $ctx.error)
   $util.log.error({
     "user": $ctx.stash.user,
     "function": $function,
     "code": "Failure",
-    "error": $ctx.error,
+    "error": $ctx.error
   })
-  #return (null)
+  #return
 #elseif ($ctx.result.statusCode != 200)
   $util.log.error({
     "user": $ctx.stash.user,
@@ -20,7 +20,7 @@
       "type": "BadResponseCode"
     }
   })
-  #return (null)
+  #return
 #else
   #return ($util.toJson($ctx.result))
 #end
