@@ -1,4 +1,8 @@
 #set( $ttl = $ctx.stash.entry_time + 300 )
+#set ( $coordinates = {
+  "latitude": $ctx.stash.location.latitude,
+  "longitude": $ctx.stash.location.longitude
+})
 {
   "version": "2018-05-29",
   "operation": "TransactWriteItems",
@@ -22,7 +26,7 @@
       },
       "attributeValues": {
         "ip": $util.dynamodb.toDynamoDBJson($ctx.stash.ip),
-        "coordinates": $util.dynamodb.toDynamoDBJson($ctx.stash.location_cache.coordinates),
+        "coordinates": $util.dynamodb.toDynamoDBJson($coordinates),
         "mmr": $util.dynamodb.toDynamoDBJson($ctx.stash.mmr),
         "ttl": $util.dynamodb.toDynamoDBJson($ttl)
       }

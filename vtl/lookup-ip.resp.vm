@@ -9,6 +9,6 @@
   })
   $util.error("Failed to lookup user's ip address")
 #else
-  $util.quiet($ctx.stash.put("location"), $ctx.result)
+  $util.quiet($ctx.stash.put("location", $ctx.result))
   #return ($util.toJson($ctx.result))
 #end

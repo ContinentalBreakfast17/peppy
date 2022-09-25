@@ -21,7 +21,7 @@
           "EventBusName": $util.toJson($ctx.stash.event_bus),
           "Detail": $util.toJson($util.toJson($detail)),
           ## this will contain the subscription name (i.e. joinUnrankedSoloQueue)
-          "DetailType": $util.toJson($ctx.stash.mutation)
+          "DetailType": $util.toJson($ctx.stash.graphql.fieldName)
          }
       ]
     }

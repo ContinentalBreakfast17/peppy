@@ -18,16 +18,21 @@ variable "paths" {
   description = "Filesystem locations"
   type = object({
     schema = string
-    vtl = string
+    vtl    = string
   })
+}
+
+variable "event_bus" {
+  description = "Event bus used to process events"
+  type        = string
 }
 
 variable "tables" {
   description = "Table names"
   type = object({
-    ip_cache = string
+    ip_cache            = string
     queue_unranked_solo = string
-    mm_unranked_solo = string
+    mmr_unranked_solo   = string
   })
 }
 

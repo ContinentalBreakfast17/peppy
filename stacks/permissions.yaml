@@ -118,6 +118,12 @@ Resources:
 
           - Effect: Allow
             Action:
+              - iam:GetPolicy*
+            Resource:
+              - "arn:aws:iam::aws:policy/service-role/AWSAppSyncPushToCloudWatchLogs"
+
+          - Effect: Allow
+            Action:
               - iam:CreateServiceLinkedRole
             Resource:
               - !Sub "arn:aws:iam::${AWS::AccountId}:role/aws-service-role/mrk.kms.amazonaws.com/AWSServiceRoleForKeyManagementServiceMultiRegionKeys"
@@ -276,29 +282,27 @@ Resources:
           ## appsync
           - Effect: Allow
             Action:
+              - appsync:EvaluateMappingTemplate
+              - appsync:GetSchemaCreationStatus
+              - appsync:List*
+            Resource:
+              - "*"
+
+          - Effect: Allow
+            Action:
               - appsync:*ApiCache
               - appsync:*ApiKey
               - appsync:*DataSource
               - appsync:*Function
               - appsync:*Resolver
               - appsync:*Type
-              - appsync:CreateDomainName
-              - appsync:CreateGraphqlApi
-              - appsync:EvaluateMappingTemplate
-              - appsync:GetSchemaCreationStatus
-              - appsync:List*
-              - appsync:StartSchemaCreation
-            Resource:
-              - "*"
-              - !Sub "arn:aws:appsync:*:${AWS::AccountId}:*"
-
-          - Effect: Allow
-            Action:
               - appsync:*GraphqlApi
+              - appsync:CreateDomainName
+              - appsync:StartSchemaCreation
               - appsync:TagResource
               - appsync:UntagResource
             Resource:
-              - !Sub "arn:aws:appsync:*:${AWS::AccountId}:apis/${Prefix}*"
+            - !Sub "arn:aws:appsync:*:${AWS::AccountId}:*"
 
           - Effect: Allow
             Action:

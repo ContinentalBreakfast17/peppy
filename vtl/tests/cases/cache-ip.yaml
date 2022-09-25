@@ -24,11 +24,12 @@ tests:
         ip:
           S: "1.2.3.4"
       attributeValues:
-        M:
-          ttl:
-            N: 604900
-          some-key:
-            S: "some-value"
+        ttl:
+          N: 604900
+        location:
+          M:
+            some-key:
+              S: "some-value"
 
   # response checks
   - name: Resp - Success

@@ -8,7 +8,8 @@ tests:
         queue_version: v1
         user: abc#123
         event_bus: some-event-bus
-        mutation: join-queue
+        graphql:
+          fieldName: join-queue
     expect:
       version: '2018-05-29'
       method: POST

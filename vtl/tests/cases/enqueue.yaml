@@ -11,10 +11,9 @@ tests:
           - dq_table2
         queue_version: v1
         user: abc#123
-        location_cache:
-          coordinates:
-            lat: 10
-            long: -10
+        location:
+          longitude: -10
+          latitude: 10
         entry_time: 100
         mmr: 1800
     expect:
@@ -47,9 +46,9 @@ tests:
             S: "1.2.3.4"
           coordinates:
             M:
-              lat:
+              latitude:
                 N: 10
-              long:
+              longitude:
                 N: -10
           mmr:
             N: 1800
@@ -61,13 +60,11 @@ tests:
       stash:
         ip: "1.2.3.4"
         queue_table: q_table
-        # dequeue_tables: []
         queue_version: v1
         user: abc#123
-        location_cache:
-          coordinates:
-            lat: 10
-            long: -10
+        location:
+          longitude: -10
+          latitude: 10
         entry_time: 100
         mmr: 1800
     expect:
@@ -86,9 +83,9 @@ tests:
             S: "1.2.3.4"
           coordinates:
             M:
-              lat:
+              latitude:
                 N: 10
-              long:
+              longitude:
                 N: -10
           mmr:
             N: 1800

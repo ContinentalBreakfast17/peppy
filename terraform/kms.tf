@@ -22,7 +22,7 @@ data "aws_iam_policy_document" "main_key" {
       type = "AWS"
       identifiers = concat(
         [data.aws_caller_identity.current.account_id],
-        [for user in data.aws_iam_group.admins.users: user.arn],
+        [for user in data.aws_iam_group.admins.users : user.arn],
       )
     }
   }

@@ -4,12 +4,14 @@
 #end
 ## 604800 == seconds in a week
 #set( $ttl = $ctx.stash.entry_time + 604800 )
-$util.quiet($ctx.stash.location.put("ttl", $ttl))
 {
   "version": "2018-05-29",
   "operation": "PutItem",
   "key": {
     "ip": $util.dynamodb.toDynamoDBJson($ctx.stash.ip)
   },
-  "attributeValues": $util.dynamodb.toDynamoDBJson($ctx.stash.location)
+  "attributeValues": {
+    "location": $util.dynamodb.toDynamoDBJson($ctx.stash.location),
+    "ttl": $util.dynamodb.toDynamoDBJson($ttl)
+  }
 }

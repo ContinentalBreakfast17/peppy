@@ -1,0 +1,30 @@
+tests:
+  # request checks
+  - name: Req
+    file: &req-file match-single.req.vm
+    context: {}
+    expect:
+      version: '2017-02-28'
+      payload: {}
+
+  # response checks
+  - name: Resp
+    file: &resp-file match-single.resp.vm
+    context:
+      arguments:
+        sessionId: "123456"
+        player1:
+          userId: abc#123
+          username: "Player 1"
+          ip: "1.2.3.4"
+        player2:
+          userId: def#456
+          username: "Player 2"
+          ip: "5.6.7.8"
+    expect:
+      sessionId: "123456"
+      userId: abc#123
+      opponent:
+        userId: def#456
+        username: "Player 2"
+        ip: "5.6.7.8"
