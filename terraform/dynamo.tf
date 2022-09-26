@@ -1,3 +1,9 @@
+locals {
+  dynamo_indexes = {
+    queue_sort = "queue_sort",
+  }
+}
+
 resource "aws_dynamodb_table" "ip_cache" {
   name             = "${var.name}-ip-cache"
   billing_mode     = "PAY_PER_REQUEST"
@@ -32,18 +38,29 @@ resource "aws_dynamodb_table" "queue_unranked_solo" {
   name             = "${var.name}-queue-unraked-solo"
   billing_mode     = "PAY_PER_REQUEST"
   table_class      = "STANDARD"
-  hash_key         = "version"
-  range_key        = "user"
+  hash_key         = "user"
   stream_enabled   = true
   stream_view_type = "NEW_AND_OLD_IMAGES"
 
-  attribute {
-    name = "version"
-    type = "S"
+  global_secondary_index {
+    name            = local.dynamo_indexes.queue_sort
+    hash_key        = "queue"
+    range_key       = "join_time"
+    projection_type = "ALL"
   }
 
   attribute {
     name = "user"
+    type = "S"
+  }
+
+  attribute {
+    name = "queue"
+    type = "S"
+  }
+
+  attribute {
+    name = "join_time"
     type = "S"
   }
 
@@ -65,7 +82,7 @@ resource "aws_dynamodb_table" "queue_unranked_solo" {
 }
 
 resource "aws_dynamodb_table" "mmr_unranked_solo" {
-  name             = "${var.name}-mmr-unraked-solo"
+  name             = "${var.name}-mmr-unranked-solo"
   billing_mode     = "PAY_PER_REQUEST"
   table_class      = "STANDARD"
   hash_key         = "user"

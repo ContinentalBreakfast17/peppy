@@ -12,5 +12,13 @@ variable "functions" {
       source_file = string
       secret_arn  = string
     })
+
+    queue_processer_unranked_solo = object({
+      role        = string
+      source_hash = string
+      source_file = string
+      table       = string
+      index       = string
+    })
   })
 }

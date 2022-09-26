@@ -85,6 +85,7 @@ Resources:
               - dynamodb:CreateTable
               - dynamodb:CreateTableReplica
               - dynamodb:DeleteTable
+              - dynamodb:DeleteTableReplica
               - dynamodb:DescribeContinuousBackups
               - dynamodb:DescribeTable
               - dynamodb:DescribeTimeToLive
@@ -121,6 +122,7 @@ Resources:
               - iam:GetPolicy*
             Resource:
               - "arn:aws:iam::aws:policy/service-role/AWSAppSyncPushToCloudWatchLogs"
+              - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 
           - Effect: Allow
             Action:
@@ -224,6 +226,22 @@ Resources:
               - lambda:Update*
             Resource:
               - !Sub "arn:aws:lambda:*:${AWS::AccountId}:function:${Prefix}*"
+
+          - Effect: Allow
+            Action:
+              - lambda:ListEventSourceMappings
+            Resource:
+              - "*"
+
+          - Effect: Allow
+            Action:
+              - lambda:*EventSourceMapping
+            Resource:
+              - "*"
+            Condition:
+              ForAnyValue:StringLike:
+                lambda:FunctionArn:
+                  - !Sub "arn:aws:lambda:*:${AWS::AccountId}:function:${Prefix}*"
 
           ## logs
           - Effect: Allow
