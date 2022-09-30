@@ -3,7 +3,6 @@ module "appsync_us_east_1" {
   name      = var.name
   role      = aws_iam_role.appsync.arn
   log_level = "ALL"
-  event_bus = "todo"
 
   paths = {
     schema = "${path.root}/../schema"
@@ -27,7 +26,6 @@ module "appsync_us_east_2" {
   name      = var.name
   role      = aws_iam_role.appsync.arn
   log_level = "ALL"
-  event_bus = "todo"
 
   paths = {
     schema = "${path.root}/../schema"

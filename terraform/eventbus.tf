@@ -1,1 +1,0 @@
-# todo: (global endpoint not supported in tf yet ...)

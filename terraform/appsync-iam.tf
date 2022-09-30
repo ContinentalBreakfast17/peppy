@@ -52,11 +52,4 @@ data "aws_iam_policy_document" "appsync_custom" {
     actions   = ["lambda:InvokeFunction"]
     resources = [replace(module.functions_us_east_1.ip_lookup.arn, "us-east-1", "*")]
   }
-
-  statement {
-    sid       = "AllowEventBridgeActions"
-    effect    = "Allow"
-    actions   = ["events:PutEvents"]
-    resources = ["*"] # todo: adjust
-  }
 }

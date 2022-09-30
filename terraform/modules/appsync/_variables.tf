@@ -22,11 +22,6 @@ variable "paths" {
   })
 }
 
-variable "event_bus" {
-  description = "Event bus used to process events"
-  type        = string
-}
-
 variable "tables" {
   description = "Table names"
   type = object({

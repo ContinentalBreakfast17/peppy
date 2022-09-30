@@ -49,14 +49,3 @@ resource "aws_appsync_function" "match_unranked_solo" {
   request_mapping_template  = file("${var.paths.vtl}/match-single.req.vm")
   response_mapping_template = file("${var.paths.vtl}/match-single.resp.vm")
 }
-
-resource "aws_appsync_function" "publish_enqueue" {
-  api_id      = aws_appsync_graphql_api.this.id
-  data_source = aws_appsync_datasource.events.name
-  name        = "publish_enqueue"
-  request_mapping_template = join("\n", [
-    "$util.quiet($ctx.stash.put(\"event_bus\", \"${var.event_bus}\"))",
-    file("${var.paths.vtl}/publish-enqueue.req.vm"),
-  ])
-  response_mapping_template = file("${var.paths.vtl}/publish-enqueue.resp.vm")
-}

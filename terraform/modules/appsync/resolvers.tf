@@ -43,7 +43,6 @@ resource "aws_appsync_resolver" "Subscription_joinUnrankedSoloQueue" {
       aws_appsync_function.cache_ip.function_id,
       aws_appsync_function.get_mmr_unranked_solo.function_id,
       aws_appsync_function.enqueue_unranked_solo.function_id,
-      aws_appsync_function.publish_enqueue.function_id,
     ]
   }
 }
