@@ -25,7 +25,7 @@ resource "aws_dynamodb_table" "queue_unranked_solo" {
 
   attribute {
     name = "join_time"
-    type = "S"
+    type = "N"
   }
 
   ttl {

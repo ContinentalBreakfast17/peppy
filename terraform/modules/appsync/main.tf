@@ -22,24 +22,6 @@ resource "aws_appsync_datasource" "noop" {
   type   = "NONE"
 }
 
-resource "aws_appsync_datasource" "events" {
-  api_id           = aws_appsync_graphql_api.this.id
-  name             = "events"
-  service_role_arn = var.role
-  type             = "HTTP"
-
-  http_config {
-    endpoint = "https://events.${data.aws_region.current.name}.amazonaws.com/"
-    authorization_config {
-      authorization_type = "AWS_IAM"
-      aws_iam_config {
-        signing_region       = data.aws_region.current.name
-        signing_service_name = "events"
-      }
-    }
-  }
-}
-
 resource "aws_appsync_datasource" "ip_cache" {
   api_id           = aws_appsync_graphql_api.this.id
   name             = "ip_cache_table"
