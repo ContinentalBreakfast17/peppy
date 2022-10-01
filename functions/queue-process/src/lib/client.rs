@@ -1,9 +1,10 @@
+use async_trait::async_trait;
 use aws_lambda_events::event::dynamodb::Event;
 use lambda_runtime::{service_fn, Error, LambdaEvent};
 // use serde_dynamo::{from_item, from_items, to_item};
 use aws_sdk_dynamodb as dynamodb;
 
-pub struct Client {
+pub struct Client<QueueItem: serde::de::DeserializeOwned> {
     region:        String,
     queue_table:   String,
     queue_index:   String,
@@ -11,10 +12,13 @@ pub struct Client {
     lock_regions:  Vec<String>,
     dynamo_client: dynamodb::Client,
     lock_clients:  Vec<dynamodb::Client>,
+    queue_item_type: std::marker::PhantomData<QueueItem>,
 }
 
-pub trait Processor {
-    fn client(&self) -> &Client;
+#[async_trait]
+pub trait Processor<QueueItem: serde::de::DeserializeOwned> {
+    fn client(&self) -> &Client<QueueItem>;
+    async fn process_items(&self, items: Vec<QueueItem>) -> Result<(), Error>;
 }
 
 const MAX_FAILURES: i32 = 5;
@@ -23,7 +27,7 @@ static LOCK_REGIONS: once_cell::sync::OnceCell<String> = once_cell::sync::OnceCe
 
 pub async fn init() {
     tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::INFO)
+        .with_max_level(tracing::Level::WARN)
         // disable printing the name of the module in every log line.
         .with_target(false)
         // disabling time is handy because CloudWatch will add the ingestion time.
@@ -36,7 +40,7 @@ pub async fn init() {
     LOCK_REGIONS.set(static_lock_regions).expect("could not save lock regions");
 }
 
-pub async fn handler(p: &dyn Processor) -> Result<(), Error> {
+pub async fn handler<QueueItem: serde::de::DeserializeOwned>(p: &dyn Processor<QueueItem>) -> Result<(), Error> {
     let handler_func_closure = move |_event: LambdaEvent<Event>| async move {
         run_wrapper(p).await
     };
@@ -45,7 +49,7 @@ pub async fn handler(p: &dyn Processor) -> Result<(), Error> {
     Ok(())
 }
 
-async fn run_wrapper(p: &dyn Processor) -> Result<(), Error> {
+async fn run_wrapper<QueueItem: serde::de::DeserializeOwned>(p: &dyn Processor<QueueItem>) -> Result<(), Error> {
     let execution_id = ksuid::Ksuid::generate();
 
     match run(p, execution_id).await {
@@ -62,7 +66,7 @@ async fn run_wrapper(p: &dyn Processor) -> Result<(), Error> {
     }
 }
 
-async fn run(p: &dyn Processor, execution_id: ksuid::Ksuid) -> Result<(), Error> {
+async fn run<QueueItem: serde::de::DeserializeOwned>(p: &dyn Processor<QueueItem>, execution_id: ksuid::Ksuid) -> Result<(), Error> {
     let client = p.client();
 
      // first, check if the region is reasonably healthy
@@ -110,22 +114,44 @@ async fn run(p: &dyn Processor, execution_id: ksuid::Ksuid) -> Result<(), Error>
         }
     };
 
-    // finally, process queue
+    // exit if lock not held
     match lock_held {
         true => {
             println!("lock held, processing queue");
-            return client.load_queue().await
-            //Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, "force error for testing")))
+            //return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, "force error for testing")));
         }
         false => {
             println!("lock not held, abandoning stream");
             // todo: consider custom error so that wrapper can distinguish this from an actual success
-            Ok(())
+            return Ok(());
+        }
+    };
+
+    // read the queue
+    let items = match client.load_queue().await {
+        Ok(list) => list,
+        Err(e) => {
+            println!("failed to read queue");
+            return Err(e);
+        }
+    };
+
+    if items.len() == 0 {
+        println!("queue is empty");
+        return Ok(());
+    }
+
+    // make matches
+    match p.process_items(items).await {
+        Ok(_) => Ok(()),
+        Err(e) => {
+            println!("failed to process items");
+            return Err(e);
         }
     }
 }
 
-impl Client {
+impl<QueueItem: serde::de::DeserializeOwned> Client<QueueItem> {
     pub async fn new() -> Result<Self, Error> {
         let config = AWS_CONFIG.get().expect("No AWS config");
         let region = config.region().expect("No region in config");
@@ -144,7 +170,16 @@ impl Client {
         let queue_index = std::env::var("QUEUE_INDEX").expect("QUEUE_INDEX not set");
         let lock_table = std::env::var("LOCK_TABLE").expect("LOCK_TABLE not set");
 
-        Ok(Self { region: region.to_string(), queue_table, queue_index, lock_table, lock_regions, dynamo_client, lock_clients })
+        Ok(Self {
+            region: region.to_string(),
+            queue_table,
+            queue_index,
+            lock_table,
+            lock_regions,
+            dynamo_client,
+            lock_clients,
+            queue_item_type: std::marker::PhantomData,
+        })
     }
 
     async fn check_health(&self, execution_id: ksuid::Ksuid) -> Result<(bool, usize), Error> {
@@ -257,7 +292,7 @@ impl Client {
         }
     }
 
-    async fn load_queue(&self) -> Result<(), Error> {
+    async fn load_queue(&self) -> Result<Vec<QueueItem>, Error> {
         let query_result = self.dynamo_client.query()
             .table_name(&self.queue_table)
             .index_name(&self.queue_index)
@@ -268,7 +303,13 @@ impl Client {
             .send().await;
 
         match query_result {
-            Ok(_query_output) => Ok(()),
+            Ok(query_output) => match query_output.items {
+                Some(items) => match serde_dynamo::from_items(items) {
+                    Ok(parsed_items) => Ok(parsed_items),
+                    Err(e) => Err(Box::new(e))
+                },
+                None => Ok(vec![])
+            },
             Err(e) => {
                 println!("failed to query queue");
                 Err(Box::new(e))
