@@ -1,5 +1,5 @@
 resource "aws_dynamodb_table" "queue_unranked_solo" {
-  name             = "${var.name}-queue-unraked-solo"
+  name             = "${var.name}-queue-unranked-solo"
   billing_mode     = "PAY_PER_REQUEST"
   table_class      = "STANDARD"
   hash_key         = "user"

@@ -3,12 +3,22 @@ name = "queue-process"
 version = "0.1.0"
 edition = "2021"
 
+[lib]
+name = "queue_processor"
+path = "src/lib/client.rs"
+
+[[bin]]
+name = "unranked-solo"
+path = "src/bin/unranked-solo.rs"
+
 [package.metadata.lambda.env]
-RUST_LOG = "debug"
+RUST_LOG = "warn"
 LOCK_REGIONS = "us-east-1,us-east-2"
-QUEUE_TABLE = "slippi-api-queue-unraked-solo"
 QUEUE_INDEX = "queue_sort"
 LOCK_TABLE = "slippi-api-process-lock"
+
+[package.metadata.lambda.bin.unranked-solo.env]
+QUEUE_TABLE = "slippi-api-queue-unranked-solo"
 
 [dependencies]
 aws_lambda_events = { version = "0.6.3", default-features = false, features = ["dynamodb"] }

@@ -5,4 +5,4 @@ run:
 	@cargo lambda start
 
 test:
-	@cargo lambda invoke --data-file test.json
+	@cargo lambda invoke --data-file test.json unranked-solo
