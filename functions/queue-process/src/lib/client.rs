@@ -1,13 +1,14 @@
 use async_trait::async_trait;
+use futures::{stream, StreamExt};
 use aws_lambda_events::event::dynamodb::Event;
 use lambda_runtime::{service_fn, Error, LambdaEvent};
-// use serde_dynamo::{from_item, from_items, to_item};
 use aws_sdk_dynamodb as dynamodb;
 
-pub struct Client<QueueItem: serde::de::DeserializeOwned> {
+pub struct Client<QueueItem: serde::de::DeserializeOwned + serde::Serialize + Identifiable> {
     region:        String,
     queue_table:   String,
     queue_index:   String,
+    match_table:   String,
     lock_table:    String,
     lock_regions:  Vec<String>,
     dynamo_client: dynamodb::Client,
@@ -16,12 +17,17 @@ pub struct Client<QueueItem: serde::de::DeserializeOwned> {
 }
 
 #[async_trait]
-pub trait Processor<QueueItem: serde::de::DeserializeOwned> {
+pub trait Processor<QueueItem: serde::de::DeserializeOwned + serde::Serialize + Identifiable> {
     fn client(&self) -> &Client<QueueItem>;
-    async fn process_items(&self, items: Vec<QueueItem>) -> Result<(), Error>;
+    async fn make_matches(&self, items: Vec<QueueItem>) -> Result<Vec<Vec<QueueItem>>, Error>;
+}
+
+pub trait Identifiable {
+    fn id(&self) -> String;
 }
 
 const MAX_FAILURES: i32 = 5;
+const CONCURRENT_REQUESTS: usize = 2;
 static AWS_CONFIG: once_cell::sync::OnceCell<aws_config::SdkConfig> = once_cell::sync::OnceCell::new();
 static LOCK_REGIONS: once_cell::sync::OnceCell<String> = once_cell::sync::OnceCell::new();
 
@@ -40,7 +46,13 @@ pub async fn init() {
     LOCK_REGIONS.set(static_lock_regions).expect("could not save lock regions");
 }
 
-pub async fn handler<QueueItem: serde::de::DeserializeOwned>(p: &dyn Processor<QueueItem>) -> Result<(), Error> {
+pub fn match_id<QueueItem: Identifiable>(players: &Vec<QueueItem>) -> String {
+    let mut ids: Vec<String> = players.iter().map(|player| player.id()).collect();
+    ids.sort();
+    ids.join("::")
+}
+
+pub async fn handler<QueueItem: serde::de::DeserializeOwned + serde::Serialize + Identifiable>(p: &dyn Processor<QueueItem>) -> Result<(), Error> {
     let handler_func_closure = move |_event: LambdaEvent<Event>| async move {
         run_wrapper(p).await
     };
@@ -49,7 +61,7 @@ pub async fn handler<QueueItem: serde::de::DeserializeOwned>(p: &dyn Processor<Q
     Ok(())
 }
 
-async fn run_wrapper<QueueItem: serde::de::DeserializeOwned>(p: &dyn Processor<QueueItem>) -> Result<(), Error> {
+async fn run_wrapper<QueueItem: serde::de::DeserializeOwned + serde::Serialize + Identifiable>(p: &dyn Processor<QueueItem>) -> Result<(), Error> {
     let execution_id = ksuid::Ksuid::generate();
 
     match run(p, execution_id).await {
@@ -66,7 +78,7 @@ async fn run_wrapper<QueueItem: serde::de::DeserializeOwned>(p: &dyn Processor<Q
     }
 }
 
-async fn run<QueueItem: serde::de::DeserializeOwned>(p: &dyn Processor<QueueItem>, execution_id: ksuid::Ksuid) -> Result<(), Error> {
+async fn run<QueueItem: serde::de::DeserializeOwned + serde::Serialize + Identifiable>(p: &dyn Processor<QueueItem>, execution_id: ksuid::Ksuid) -> Result<(), Error> {
     let client = p.client();
 
      // first, check if the region is reasonably healthy
@@ -142,16 +154,45 @@ async fn run<QueueItem: serde::de::DeserializeOwned>(p: &dyn Processor<QueueItem
     }
 
     // make matches
-    match p.process_items(items).await {
-        Ok(_) => Ok(()),
+    let matches = match p.make_matches(items).await {
+        Ok(list) => list,
         Err(e) => {
-            println!("failed to process items");
+            println!("failed to make matches");
             return Err(e);
         }
+    };
+
+    // publish matches
+    let publish_results = stream::iter(matches).map(|players| {
+        async move {
+            client.publish_match(execution_id, players).await
+        }
+    }).buffer_unordered(CONCURRENT_REQUESTS);
+
+    // wait on results
+    let any_match_success = publish_results.any(|result| async {
+        match result {
+            Ok(id) => {
+                println!("published match: {}", id);
+                true
+            },
+            Err(e) => {
+                println!("failed to publish match: {:?}", e);
+                false
+            }
+        }
+    }).await;
+
+    // todo: inc wait count on unmatched
+
+    // if everything failed, our region ain't healthy
+    match any_match_success {
+        true => Ok(()),
+        false => Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, "all matches failed to publish")))
     }
 }
 
-impl<QueueItem: serde::de::DeserializeOwned> Client<QueueItem> {
+impl<QueueItem: serde::de::DeserializeOwned + serde::Serialize + Identifiable> Client<QueueItem> {
     pub async fn new() -> Result<Self, Error> {
         let config = AWS_CONFIG.get().expect("No AWS config");
         let region = config.region().expect("No region in config");
@@ -168,12 +209,14 @@ impl<QueueItem: serde::de::DeserializeOwned> Client<QueueItem> {
 
         let queue_table = std::env::var("QUEUE_TABLE").expect("QUEUE_TABLE not set");
         let queue_index = std::env::var("QUEUE_INDEX").expect("QUEUE_INDEX not set");
+        let match_table = std::env::var("MATCH_TABLE").expect("MATCH_TABLE not set");
         let lock_table = std::env::var("LOCK_TABLE").expect("LOCK_TABLE not set");
 
         Ok(Self {
             region: region.to_string(),
             queue_table,
             queue_index,
+            match_table,
             lock_table,
             lock_regions,
             dynamo_client,
@@ -314,6 +357,40 @@ impl<QueueItem: serde::de::DeserializeOwned> Client<QueueItem> {
                 println!("failed to query queue");
                 Err(Box::new(e))
             }
+        }
+    }
+
+    async fn publish_match(&self, execution_id: ksuid::Ksuid, players: Vec<QueueItem>) -> Result<String, Error> {
+        let id = match_id(&players);
+        let players_av = match serde_dynamo::to_attribute_value(players) {
+            Ok(av) => av,
+            Err(e) => {
+                println!("failed to turn players to AV");
+                return Err(Box::new(e));
+            }
+        };
+
+        // todo: delete players from queue (condition check on "state" to make sure player hasn't joined/requeued since)
+        let transact_result = self.dynamo_client.transact_write_items()
+            .transact_items(
+                dynamodb::model::TransactWriteItem::builder()
+                    .put(
+                        dynamodb::model::Put::builder()
+                            .table_name(&self.match_table)
+                            .item("match", dynamodb::model::AttributeValue::S(id.clone()))
+                            .item("sessionId", dynamodb::model::AttributeValue::S(execution_id.to_base62()))
+                            .item("timestamp", dynamodb::model::AttributeValue::N(execution_id.time().sec.to_string()))
+                            .item("ttl", dynamodb::model::AttributeValue::N((execution_id.time().sec + 3600).to_string()))
+                            .item("players", players_av)
+                            .build()
+                    )
+                    .build()
+            )
+            .send().await;
+
+        match transact_result {
+            Ok(_) => return Ok(id),
+            Err(e) => Err(Box::new(e))
         }
     }
 

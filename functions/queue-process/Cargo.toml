@@ -19,6 +19,7 @@ LOCK_TABLE = "slippi-api-process-lock"
 
 [package.metadata.lambda.bin.unranked-solo.env]
 QUEUE_TABLE = "slippi-api-queue-unranked-solo"
+MATCH_TABLE = "slippi-api-matches-unranked-solo"
 
 [dependencies]
 aws_lambda_events = { version = "0.6.3", default-features = false, features = ["dynamodb"] }
@@ -35,3 +36,5 @@ ksuid = "0.2.0"
 serde = "1.0.145"
 async-trait = "0.1.57"
 geo = "0.23.0"
+petgraph = "0.6.2"
+futures = "0.3.24"

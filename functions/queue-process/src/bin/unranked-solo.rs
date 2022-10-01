@@ -2,12 +2,13 @@ use lambda_runtime::{Error};
 use async_trait::async_trait;
 use serde::{Serialize, Deserialize};
 use geo::{EuclideanDistance, point};
-use queue_processor::{Client, init, handler};
+use queue_processor::{Client, init, handler, match_id};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 struct QueueItem {
     user: String,
     ip: String,
+    region: String,
     mmr: i64,
     join_time: i64,
     coordinates: Coordinates,
@@ -15,10 +16,22 @@ struct QueueItem {
     wait_count: i64,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 struct Coordinates {
     latitude: f64,
     longitude: f64,
+}
+
+impl queue_processor::Identifiable for QueueItem {
+    fn id(&self) -> String {
+        self.user.clone()
+    }
+}
+
+impl queue_processor::Identifiable for &QueueItem {
+    fn id(&self) -> String {
+        self.user.clone()
+    }
 }
 
 struct Processor {
@@ -33,29 +46,28 @@ impl Processor {
         }
     }
 
-    // current implementation naively checks if mmr is within a certain threshold
-    fn compare_mmr(&self, a: &QueueItem, b: &QueueItem) -> i64 {
-        if (a.mmr - b.mmr).abs() < 100 {
-            return 0;
-        }
-        return 1;
+    fn compatible(&self, a: &QueueItem, b: &QueueItem) -> bool {
+        let checks = vec![
+            self.compatible_mmr(a, b),
+            self.compatible_distance(a, b),
+            self.compatible_ip(a, b),
+        ];
+        checks.iter().all(|check| *check)
     }
 
-    fn compare_distance(&self, a: &QueueItem, b: &QueueItem) -> i64 {
+    fn compatible_mmr(&self, a: &QueueItem, b: &QueueItem) -> bool {
+        (a.mmr - b.mmr).abs() < 100
+    }
+
+    fn compatible_distance(&self, a: &QueueItem, b: &QueueItem) -> bool {
         let a_point = point!(x: a.coordinates.longitude, y: a.coordinates.latitude);
         let b_point = point!(x: b.coordinates.longitude, y: b.coordinates.latitude);
 
-        if (a_point.euclidean_distance(&b_point)).abs() < 100.0 {
-            return 0;
-        }
-        return 1;
+        (a_point.euclidean_distance(&b_point)).abs() < 100.0
     }
 
-    fn compare_ip(&self, a: &QueueItem, b: &QueueItem) -> i64 {
-        if a.ip != b.ip {
-            return 0;
-        }
-        return 10000;
+    fn compatible_ip(&self, a: &QueueItem, b: &QueueItem) -> bool {
+        a.ip != b.ip
     }
 }
 
@@ -65,38 +77,38 @@ impl queue_processor::Processor<QueueItem> for Processor {
         &self.client
     }
 
-    async fn process_items(&self, items: Vec<QueueItem>) -> Result<(), Error> {
-        let mut matches: Vec<(&QueueItem, &QueueItem)> = Vec::new();
-        let mut matched_users = std::collections::HashSet::new();
+    async fn make_matches(&self, items: Vec<QueueItem>) -> Result<Vec<Vec<QueueItem>>, Error> {
+        let mut graph = petgraph::Graph::<&QueueItem, String, petgraph::Undirected>::default();
+        for item in items.iter() {
+            graph.add_node(item);
+        }
 
-        for (index, a) in items.iter().enumerate() {
-            if index >= items.iter().len() - 1 {
+        for (i, node_a_index) in graph.node_indices().enumerate() {
+            if i == graph.node_indices().len() - 1 {
+                // we're done
                 break
-            } else if matched_users.contains(&a.user) {
-                continue
             }
 
-            for b in items.iter().skip(index + 1) {
-                if matched_users.contains(&b.user) {
-                    continue
-                }
-
-                let score = self.compare_ip(a, b) + self.compare_mmr(a, b) + self.compare_distance(a, b);
-                if score == 0 {
-                    // compatible
-                    matches.push((a, b));
-                    matched_users.insert(a.user.clone());
-                    matched_users.insert(b.user.clone());
-                    break
+            // add an edge to every node after it in the list
+            for node_b_index in graph.node_indices().skip(i + 1) {
+                let a = graph[node_a_index];
+                let b = graph[node_b_index];
+                if self.compatible(a, b) {
+                    let v = vec![a, b];
+                    let edge = match_id(&v);
+                    graph.add_edge(node_a_index, node_b_index, edge);
                 }
             }
         }
 
-        for (a, b) in matches.iter() {
-            println!("{:?} - {:?}", a.user, b.user);
+        let mut matches: Vec<Vec<QueueItem>> = Vec::new();
+        let matching = petgraph::algo::matching::greedy_matching(&graph);
+        for (node_a_index, node_b_index) in matching.edges() {
+            let a = graph[node_a_index].clone();
+            let b = graph[node_b_index].clone();
+            matches.push(vec![a, b]);
         }
-
-        Ok(())
+        Ok(matches)
     }
 }
 
