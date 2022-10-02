@@ -51,7 +51,7 @@ data "aws_dynamodb_table" "queue_unranked_solo_us_east_2" {
 }
 
 resource "aws_lambda_event_source_mapping" "queue_processer_unranked_solo_us_east_1" {
-  enabled                            = var.enable_queue_processing
+  enabled                            = var.process_toggles.queue_unranked_solo
   event_source_arn                   = aws_dynamodb_table.queue_unranked_solo.stream_arn
   function_name                      = module.functions_us_east_1.queue_processer_unranked_solo.arn
   starting_position                  = "LATEST"
@@ -67,7 +67,7 @@ resource "aws_lambda_event_source_mapping" "queue_processer_unranked_solo_us_eas
 
 resource "aws_lambda_event_source_mapping" "queue_processer_unranked_solo_us_east_2" {
   provider                           = aws.us_east_2
-  enabled                            = var.enable_queue_processing
+  enabled                            = var.process_toggles.queue_unranked_solo
   event_source_arn                   = data.aws_dynamodb_table.queue_unranked_solo_us_east_2.stream_arn
   function_name                      = module.functions_us_east_2.queue_processer_unranked_solo.arn
   starting_position                  = "LATEST"

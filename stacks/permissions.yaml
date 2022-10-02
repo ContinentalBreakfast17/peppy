@@ -335,8 +335,5 @@ Resources:
           - Effect: Allow
             Action:
               - appsync:GraphQL
-              - appsync:AssociateApi
-              - appsync:DisassociateApi
-              - appsync:GetApiAssociation
             Resource:
               - !Sub "arn:aws:appsync:*:${AWS::AccountId}:apis/*"

@@ -5,6 +5,14 @@ data "archive_file" "fn_ip_lookup" {
   excludes    = ["*.zip"]
 }
 
+data "archive_file" "fn_match_publisher" {
+  type        = "zip"
+  source_dir  = "${path.root}/../functions/process-queue/target/lambda/unranked-solo"
+  output_path = "${path.root}/../functions/process-queue/target/lambda/unranked-solo/code.zip"
+  excludes    = ["*.zip"]
+}
+
+
 data "archive_file" "fn_queue_processer_unranked_solo" {
   type        = "zip"
   source_dir  = "${path.root}/../functions/test"
@@ -24,12 +32,22 @@ module "functions_us_east_1" {
       secret_arn  = aws_secretsmanager_secret.ip_lookup_token.arn
     }
 
+    match_publisher = {
+      role        = aws_iam_role.match_publisher.arn
+      source_file = data.archive_file.fn_match_publisher.output_path
+      source_hash = data.archive_file.fn_match_publisher.output_base64sha256
+      api_url     = "https://<region>.todo"
+    }
+
     queue_processer_unranked_solo = {
-      role        = aws_iam_role.queue_processer_unranked_solo.arn
-      source_file = data.archive_file.fn_queue_processer_unranked_solo.output_path
-      source_hash = data.archive_file.fn_queue_processer_unranked_solo.output_base64sha256
-      table       = aws_dynamodb_table.queue_unranked_solo.id
-      index       = local.dynamo_indexes.queue_sort
+      role         = aws_iam_role.queue_processer_unranked_solo.arn
+      source_file  = data.archive_file.fn_queue_processer_unranked_solo.output_path
+      source_hash  = data.archive_file.fn_queue_processer_unranked_solo.output_base64sha256
+      queue_index  = local.dynamo_indexes.queue_sort
+      queue_table  = aws_dynamodb_table.queue_unranked_solo.id
+      match_table  = aws_dynamodb_table.match_publisher.id
+      lock_table   = aws_dynamodb_table.process_lock.id
+      lock_regions = local.lock_regions
     }
   }
 }
@@ -47,12 +65,22 @@ module "functions_us_east_2" {
       secret_arn  = aws_secretsmanager_secret.ip_lookup_token.arn
     }
 
+    match_publisher = {
+      role        = aws_iam_role.match_publisher.arn
+      source_file = data.archive_file.fn_match_publisher.output_path
+      source_hash = data.archive_file.fn_match_publisher.output_base64sha256
+      api_url     = "https://<region>.todo"
+    }
+
     queue_processer_unranked_solo = {
-      role        = aws_iam_role.queue_processer_unranked_solo.arn
-      source_file = data.archive_file.fn_queue_processer_unranked_solo.output_path
-      source_hash = data.archive_file.fn_queue_processer_unranked_solo.output_base64sha256
-      table       = aws_dynamodb_table.queue_unranked_solo.id
-      index       = local.dynamo_indexes.queue_sort
+      role         = aws_iam_role.queue_processer_unranked_solo.arn
+      source_file  = data.archive_file.fn_queue_processer_unranked_solo.output_path
+      source_hash  = data.archive_file.fn_queue_processer_unranked_solo.output_base64sha256
+      queue_index  = local.dynamo_indexes.queue_sort
+      queue_table  = aws_dynamodb_table.queue_unranked_solo.id
+      match_table  = aws_dynamodb_table.match_publisher.id
+      lock_table   = aws_dynamodb_table.process_lock.id
+      lock_regions = local.lock_regions
     }
   }
 }

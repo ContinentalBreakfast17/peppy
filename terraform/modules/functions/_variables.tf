@@ -14,11 +14,21 @@ variable "functions" {
     })
 
     queue_processer_unranked_solo = object({
+      role         = string
+      source_hash  = string
+      source_file  = string
+      match_table  = string
+      queue_table  = string
+      queue_index  = string
+      lock_table   = string
+      lock_regions = list(string)
+    })
+
+    match_publisher = object({
       role        = string
       source_hash = string
       source_file = string
-      table       = string
-      index       = string
+      api_url     = string
     })
   })
 }

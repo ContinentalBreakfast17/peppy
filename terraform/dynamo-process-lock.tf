@@ -1,3 +1,7 @@
+locals {
+  lock_regions = ["us-east-1", "us-east-2"]
+}
+
 resource "aws_dynamodb_table" "process_lock" {
   name             = "${var.name}-process-lock"
   billing_mode     = "PAY_PER_REQUEST"

@@ -8,6 +8,12 @@ output "ip_lookup" {
   }
 }
 
+output "match_publisher" {
+  value = {
+    arn = aws_lambda_function.match_publisher.arn,
+  }
+}
+
 output "queue_processer_unranked_solo" {
   value = {
     arn = aws_lambda_function.queue_processer_unranked_solo.arn,

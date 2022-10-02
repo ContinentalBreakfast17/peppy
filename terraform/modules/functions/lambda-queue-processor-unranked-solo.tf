@@ -17,8 +17,11 @@ resource "aws_lambda_function" "queue_processer_unranked_solo" {
 
   environment {
     variables = {
-      TABLE = replace(var.functions.queue_processer_unranked_solo.table, "us-east-1", data.aws_region.current.name),
-      INDEX = var.functions.queue_processer_unranked_solo.index
+      QUEUE_TABLE  = var.functions.queue_processer_unranked_solo.queue_table,
+      QUEUE_INDEX  = var.functions.queue_processer_unranked_solo.queue_index,
+      MATCH_TABLE  = var.functions.queue_processer_unranked_solo.match_table,
+      LOCK_TABLE   = var.functions.queue_processer_unranked_solo.lock_table,
+      LOCK_REGIONS = join(",", var.functions.queue_processer_unranked_solo.lock_regions),
     }
   }
 

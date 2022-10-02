@@ -49,6 +49,51 @@ data "aws_iam_policy_document" "ip_lookup_custom" {
 
 ########
 #
+# Match Publisher
+#
+resource "aws_iam_role" "match_publisher" {
+  name               = "match-publisher"
+  path               = "/${var.name}/functions/"
+  assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
+}
+
+resource "aws_iam_role_policy_attachment" "match_publisher_kms" {
+  role       = aws_iam_role.match_publisher.name
+  policy_arn = aws_iam_policy.kms_crypto.arn
+}
+
+resource "aws_iam_role_policy_attachment" "match_publisher_logs" {
+  role       = aws_iam_role.match_publisher.name
+  policy_arn = data.aws_iam_policy.lambda_logs.arn
+}
+
+resource "aws_iam_role_policy" "match_publisher_custom" {
+  role   = aws_iam_role.match_publisher.name
+  policy = data.aws_iam_policy_document.match_publisher_custom.json
+}
+
+data "aws_iam_policy_document" "match_publisher_custom" {
+  statement {
+    sid       = "AllowReadDynamoStream"
+    effect    = "Allow"
+    actions   = ["dynamodb:GetRecords", "dynamodb:GetShardIterator", "dynamodb:DescribeStream", "dynamodb:ListStreams"]
+    resources = ["${replace(aws_dynamodb_table.match_publisher.arn, "us-east-1", "*")}/stream/*"]
+  }
+
+  statement {
+    sid       = "ApiAccess"
+    effect    = "Allow"
+    actions   = ["appsync:GraphQL"]
+    resources = [
+      "arn:aws:appsync:*:${data.aws_caller_identity.current.account_id}:apis/*/types/Mutation/fields/publishMatch",
+      "arn:aws:appsync:*:${data.aws_caller_identity.current.account_id}:apis/*/types/Match/fields/*",
+      "arn:aws:appsync:*:${data.aws_caller_identity.current.account_id}:apis/*/types/Player/fields/*",
+    ]
+  }
+}
+
+########
+#
 # Queue Processer - unranked solo
 #
 resource "aws_iam_role" "queue_processer_unranked_solo" {
@@ -72,6 +117,7 @@ resource "aws_iam_role_policy" "queue_processer_unranked_solo_custom" {
   policy = data.aws_iam_policy_document.queue_processer_unranked_solo_custom.json
 }
 
+# todo: actual policy w/ principal tag for re-use
 data "aws_iam_policy_document" "queue_processer_unranked_solo_custom" {
   statement {
     sid       = "AllowReadDynamoStream"
@@ -81,9 +127,30 @@ data "aws_iam_policy_document" "queue_processer_unranked_solo_custom" {
   }
 
   statement {
-    sid       = "AllowReadDynamo"
+    sid       = "QueueTableAccess"
+    effect    = "Allow"
+    actions   = ["dynamodb:ConditionCheckItem", "dynamodb:DeleteItem", "dynamodb:PutItem"]
+    resources = [replace(aws_dynamodb_table.queue_unranked_solo.arn, "us-east-1", "*")]
+  }
+
+  statement {
+    sid       = "QueueTableIndexAccess"
     effect    = "Allow"
     actions   = ["dynamodb:Query"]
     resources = ["${replace(aws_dynamodb_table.queue_unranked_solo.arn, "us-east-1", "*")}/index/${local.dynamo_indexes.queue_sort}"]
+  }
+
+  statement {
+    sid       = "LockTableAccess"
+    effect    = "Allow"
+    actions   = ["dynamodb:Query", "dynamodb:*Item"]
+    resources = [replace(aws_dynamodb_table.process_lock.arn, "us-east-1", "*")]
+  }
+
+  statement {
+    sid       = "MatchTableAccess"
+    effect    = "Allow"
+    actions   = ["dynamodb:GetItem", "dynamodb:PutItem"]
+    resources = [replace(aws_dynamodb_table.match_publisher.arn, "us-east-1", "*")]
   }
 }
