@@ -332,4 +332,11 @@ Resources:
             Resource:
               - !Sub "arn:aws:appsync:*:${AWS::AccountId}:domainnames/*"
 
-        ## event bus
+          - Effect: Allow
+            Action:
+              - appsync:GraphQL
+              - appsync:AssociateApi
+              - appsync:DisassociateApi
+              - appsync:GetApiAssociation
+            Resource:
+              - !Sub "arn:aws:appsync:*:${AWS::AccountId}:apis/*"

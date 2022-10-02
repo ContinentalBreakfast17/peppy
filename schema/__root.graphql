@@ -9,27 +9,34 @@ type Query {
 }
 
 type Mutation {
-  unrankedSoloMatch(sessionId: ID!, player1: PlayerInput!, player2: PlayerInput!): SinglesMatchNotification @aws_iam
+  publishMatch(queue: String!, sessionId: ID!, players: [PlayerInput!]!): QueueNotification @aws_iam
 }
 
 type Subscription {
-  joinUnrankedSoloQueue(userId: String!): SinglesMatchNotification @aws_subscribe(mutations: ["unrankedSoloMatch"])
+  joinUnrankedSoloQueue(userId: String!): QueueNotification @aws_subscribe(mutations: ["publishMatch"])
 }
 
-type SinglesMatchNotification {
-  sessionId: ID!
-  userId: String!
-  opponent: Player!
+union QueueNotification = Match | Heartbeat
+
+type Heartbeat {
+  timestamp: String! @aws_iam
+}
+
+type Match {
+  sessionId: ID! @aws_iam
+  queue: String! @aws_iam
+  playerIds: [String!]! @aws_iam
+  players: [Player!]! @aws_iam
 }
 
 type Player {
-  userId: String!
-  username: String!
-  ip: AWSIPAddress!
+  userId: String! @aws_iam
+  # username: String!
+  ip: AWSIPAddress! @aws_iam
 }
 
 input PlayerInput {
   userId: String!
-  username: String!
+  # username: String!
   ip: AWSIPAddress!
 }

@@ -14,15 +14,11 @@ resource "aws_appsync_function" "check_ip_cache" {
   response_mapping_template = file("${var.paths.vtl}/check-ip-cache.resp.vm")
 }
 
-resource "aws_appsync_function" "enqueue_unranked_solo" {
-  api_id      = aws_appsync_graphql_api.this.id
-  data_source = aws_appsync_datasource.queue_unranked_solo.name
-  name        = "enqueue_unranked_solo"
-  request_mapping_template = join("\n", [
-    "$util.quiet($ctx.stash.put(\"dequeue_tables\", []))",
-    "$util.quiet($ctx.stash.put(\"queue_table\", \"${var.tables.queue_unranked_solo}\"))",
-    file("${var.paths.vtl}/enqueue.req.vm"),
-  ])
+resource "aws_appsync_function" "enqueue" {
+  api_id                    = aws_appsync_graphql_api.this.id
+  data_source               = aws_appsync_datasource.queue_unranked_solo.name
+  name                      = "enqueue"
+  request_mapping_template  = file("${var.paths.vtl}/enqueue.req.vm")
   response_mapping_template = file("${var.paths.vtl}/enqueue.resp.vm")
 }
 
@@ -42,10 +38,10 @@ resource "aws_appsync_function" "lookup_ip" {
   response_mapping_template = file("${var.paths.vtl}/lookup-ip.resp.vm")
 }
 
-resource "aws_appsync_function" "match_unranked_solo" {
+resource "aws_appsync_function" "publish_match" {
   api_id                    = aws_appsync_graphql_api.this.id
   data_source               = aws_appsync_datasource.noop.name
-  name                      = "match_unranked_solo"
-  request_mapping_template  = file("${var.paths.vtl}/match-single.req.vm")
-  response_mapping_template = file("${var.paths.vtl}/match-single.resp.vm")
+  name                      = "publish_match"
+  request_mapping_template  = file("${var.paths.vtl}/match.req.vm")
+  response_mapping_template = file("${var.paths.vtl}/match.resp.vm")
 }

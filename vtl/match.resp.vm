@@ -1,0 +1,11 @@
+#set( $ids = [] )
+#foreach( $player in $ctx.args.players )
+  $util.quiet($ids.add($player.userId))
+#end
+{
+  "__typename": "Match",
+  "queue": $util.toJson($ctx.args.queue),
+  "sessionId": $util.toJson($ctx.args.sessionId),
+  "playerIds": $util.toJson($ids),
+  "players": $util.toJson($ctx.args.players)
+}

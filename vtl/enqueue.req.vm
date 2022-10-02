@@ -12,7 +12,6 @@
       "table": $util.toJson($dequeue_table),
       "operation": "DeleteItem",
       "key": {
-        "version": $util.dynamodb.toDynamoDBJson($ctx.stash.queue_version),
         "user": $util.dynamodb.toDynamoDBJson($ctx.stash.user)
       }
     },
@@ -21,14 +20,16 @@
       "table": $util.toJson($ctx.stash.queue_table),
       "operation": "PutItem",
       "key": {
-        "version": $util.dynamodb.toDynamoDBJson($ctx.stash.queue_version),
         "user": $util.dynamodb.toDynamoDBJson($ctx.stash.user)
       },
       "attributeValues": {
         "ip": $util.dynamodb.toDynamoDBJson($ctx.stash.ip),
         "coordinates": $util.dynamodb.toDynamoDBJson($coordinates),
         "mmr": $util.dynamodb.toDynamoDBJson($ctx.stash.mmr),
-        "ttl": $util.dynamodb.toDynamoDBJson($ttl)
+        "ttl": $util.dynamodb.toDynamoDBJson($ttl),
+        "join_time": $util.dynamodb.toDynamoDBJson($ctx.stash.entry_time),
+        "queue": $util.dynamodb.toDynamoDBJson($ctx.stash.queue_table),
+        "region": $util.dynamodb.toDynamoDBJson($ctx.stash.region)
       }
     }
   ]

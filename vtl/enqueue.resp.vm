@@ -1,4 +1,24 @@
 #set ($function = "JoinQueue")
+$util.quiet($extensions.setSubscriptionFilter(
+  {
+    "filterGroup": [
+      {
+        "filters": [
+          {
+            "fieldName": "queue",
+            "operator": "eq",
+            "value": $ctx.stash.queue_table
+          },
+          {
+            "fieldName": "playerIds",
+            "operator": "contains",
+            "value": $ctx.stash.user
+          }
+        ]
+      }
+    ]
+  }
+))
 
 #if ($util.isNull($ctx.result) || $ctx.error)
   $util.log.error({

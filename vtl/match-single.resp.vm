@@ -1,5 +1,0 @@
-{
-  "sessionId": $util.toJson($ctx.args.sessionId),
-  "userId": $util.toJson($ctx.args.player1.userId),
-  "opponent": $util.toJson($ctx.args.player2)
-}

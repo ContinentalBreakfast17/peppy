@@ -4,12 +4,12 @@ tests:
     file: &req-file enqueue.req.vm
     context:
       stash:
+        region: us-east-1
         ip: "1.2.3.4"
         queue_table: q_table
         dequeue_tables:
           - dq_table1
           - dq_table2
-        queue_version: v1
         user: abc#123
         location:
           longitude: -10
@@ -23,22 +23,16 @@ tests:
       - table: dq_table1
         operation: DeleteItem
         key:
-          version:
-            S: v1
           user:
             S: abc#123
       - table: dq_table2
         operation: DeleteItem
         key:
-          version:
-            S: v1
           user:
             S: abc#123
       - table: q_table
         operation: PutItem
         key:
-          version:
-            S: v1
           user:
             S: abc#123
         attributeValues:
@@ -54,13 +48,19 @@ tests:
             N: 1800
           ttl:
             N: 400
+          join_time:
+            N: 100
+          queue:
+            S: q_table
+          region:
+            S: us-east-1
   - name: Req - No Dequeue
     file: *req-file
     context:
       stash:
+        region: us-east-1
         ip: "1.2.3.4"
         queue_table: q_table
-        queue_version: v1
         user: abc#123
         location:
           longitude: -10
@@ -74,8 +74,6 @@ tests:
       - table: q_table
         operation: PutItem
         key:
-          version:
-            S: v1
           user:
             S: abc#123
         attributeValues:
@@ -91,11 +89,20 @@ tests:
             N: 1800
           ttl:
             N: 400
+          join_time:
+            N: 100
+          queue:
+            S: q_table
+          region:
+            S: us-east-1
 
   # response checks
   - name: Resp - Success
     file: &resp-file enqueue.resp.vm
     context:
+      stash:
+        user: abc#123
+        queue: unranked
       result: {}
     expect: {}
 

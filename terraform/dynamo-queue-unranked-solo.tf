@@ -51,14 +51,32 @@ data "aws_dynamodb_table" "queue_unranked_solo_us_east_2" {
 }
 
 resource "aws_lambda_event_source_mapping" "queue_processer_unranked_solo_us_east_1" {
-  event_source_arn  = aws_dynamodb_table.queue_unranked_solo.stream_arn
-  function_name     = module.functions_us_east_1.queue_processer_unranked_solo.arn
-  starting_position = "LATEST"
+  enabled                            = var.enable_queue_processing
+  event_source_arn                   = aws_dynamodb_table.queue_unranked_solo.stream_arn
+  function_name                      = module.functions_us_east_1.queue_processer_unranked_solo.arn
+  starting_position                  = "LATEST"
+  maximum_batching_window_in_seconds = 2
+  maximum_retry_attempts             = 6
+
+  filter_criteria {
+    filter {
+      pattern = jsonencode(local.dynamo_filters.queue_process)
+    }
+  }
 }
 
 resource "aws_lambda_event_source_mapping" "queue_processer_unranked_solo_us_east_2" {
-  provider          = aws.us_east_2
-  event_source_arn  = data.aws_dynamodb_table.queue_unranked_solo_us_east_2.stream_arn
-  function_name     = module.functions_us_east_2.queue_processer_unranked_solo.arn
-  starting_position = "LATEST"
+  provider                           = aws.us_east_2
+  enabled                            = var.enable_queue_processing
+  event_source_arn                   = data.aws_dynamodb_table.queue_unranked_solo_us_east_2.stream_arn
+  function_name                      = module.functions_us_east_2.queue_processer_unranked_solo.arn
+  starting_position                  = "LATEST"
+  maximum_batching_window_in_seconds = 2
+  maximum_retry_attempts             = 6
+
+  filter_criteria {
+    filter {
+      pattern = jsonencode(local.dynamo_filters.queue_process)
+    }
+  }
 }

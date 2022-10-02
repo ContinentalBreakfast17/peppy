@@ -10,6 +10,10 @@ resource "aws_appsync_graphql_api" "this" {
   tags                = local.tags
   authentication_type = "API_KEY" # this will likely change
 
+  additional_authentication_provider {
+    authentication_type = "AWS_IAM"
+  }
+
   log_config {
     cloudwatch_logs_role_arn = var.role
     field_log_level          = var.log_level

@@ -1,0 +1,31 @@
+tests:
+  # request checks
+  - name: Req
+    file: &req-file match.req.vm
+    context: {}
+    expect:
+      version: '2017-02-28'
+      payload: {}
+
+  # response checks
+  - name: Resp
+    file: &resp-file match.resp.vm
+    context:
+      arguments:
+        sessionId: "123456"
+        queue: some-queue
+        players:
+          - userId: abc#123
+            ip: "1.2.3.4"
+          - userId: def#456
+            ip: "5.6.7.8"
+    expect:
+      __typename: Match
+      playerIds: ["abc#123", "def#456"]
+      queue: some-queue
+      sessionId: "123456"
+      players:
+        - userId: abc#123
+          ip: "1.2.3.4"
+        - userId: def#456
+          ip: "5.6.7.8"
