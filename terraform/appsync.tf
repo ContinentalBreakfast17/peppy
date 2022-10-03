@@ -9,6 +9,12 @@ module "appsync_us_east_1" {
     vtl    = "${path.root}/../vtl"
   }
 
+  dns = {
+    domain_name = local.domain_name
+    zone_id     = data.aws_route53_zone.domain_name.zone_id
+    cert        = aws_acm_certificate.api_wildcard.arn
+  }
+
   tables = {
     ip_cache            = aws_dynamodb_table.ip_cache.id
     queue_unranked_solo = aws_dynamodb_table.queue_unranked_solo.id
@@ -30,6 +36,12 @@ module "appsync_us_east_2" {
   paths = {
     schema = "${path.root}/../schema"
     vtl    = "${path.root}/../vtl"
+  }
+
+  dns = {
+    domain_name = local.domain_name
+    zone_id     = data.aws_route53_zone.domain_name.zone_id
+    cert        = aws_acm_certificate.api_wildcard.arn
   }
 
   tables = {

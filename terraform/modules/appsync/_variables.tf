@@ -14,6 +14,15 @@ variable "log_level" {
   default     = "ALL"
 }
 
+variable "dns" {
+  description = "DNS settings"
+  type = object({
+    domain_name = string
+    zone_id     = string
+    cert        = string
+  })
+}
+
 variable "paths" {
   description = "Filesystem locations"
   type = object({

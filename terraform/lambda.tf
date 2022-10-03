@@ -36,7 +36,7 @@ module "functions_us_east_1" {
       role        = aws_iam_role.match_publisher.arn
       source_file = data.archive_file.fn_match_publisher.output_path
       source_hash = data.archive_file.fn_match_publisher.output_base64sha256
-      api_url     = "https://<region>.todo"
+      api_url     = local.regional_url
     }
 
     queue_processer_unranked_solo = {
@@ -69,7 +69,7 @@ module "functions_us_east_2" {
       role        = aws_iam_role.match_publisher.arn
       source_file = data.archive_file.fn_match_publisher.output_path
       source_hash = data.archive_file.fn_match_publisher.output_base64sha256
-      api_url     = "https://<region>.todo"
+      api_url     = local.regional_url
     }
 
     queue_processer_unranked_solo = {

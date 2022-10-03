@@ -81,9 +81,9 @@ data "aws_iam_policy_document" "match_publisher_custom" {
   }
 
   statement {
-    sid       = "ApiAccess"
-    effect    = "Allow"
-    actions   = ["appsync:GraphQL"]
+    sid     = "ApiAccess"
+    effect  = "Allow"
+    actions = ["appsync:GraphQL"]
     resources = [
       "arn:aws:appsync:*:${data.aws_caller_identity.current.account_id}:apis/*/types/Mutation/fields/publishMatch",
       "arn:aws:appsync:*:${data.aws_caller_identity.current.account_id}:apis/*/types/Match/fields/*",
