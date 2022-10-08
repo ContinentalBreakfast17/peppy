@@ -3,6 +3,10 @@ name = "ip-lookup"
 version = "0.1.0"
 edition = "2021"
 
+[lib]
+name = "ip_lookup"
+path = "src/lib/client.rs"
+
 [package.metadata.lambda.env]
 RUST_LOG = "debug"
 SECRET_ARN = "slippi-api-ip-lookup-test"

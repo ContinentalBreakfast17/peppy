@@ -11,7 +11,7 @@ resource "aws_lambda_function" "queue_processer_unranked_solo" {
   handler          = "test.handler"
   runtime          = "python3.9"
   architectures    = ["arm64"]
-  timeout          = 10
+  timeout          = 15
   memory_size      = 128
   tags             = local.tags
 

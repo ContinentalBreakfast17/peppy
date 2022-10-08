@@ -1,0 +1,39 @@
+#set( $ttl = $ctx.stash.entry_time + 6000 )
+{
+  "version": "2018-05-29",
+  "operation": "TransactWriteItems",
+  "transactItems": [
+    {
+      "table": $util.toJson($ctx.stash.healthcheck_table),
+      "operation": "ConditionCheck",
+      "key": {
+        "region": $util.dynamodb.toDynamoDBJson($ctx.stash.region),
+        "id": $util.dynamodb.toDynamoDBJson("block")
+      },
+      "condition": {
+        ## succeeds if there is no block or if there is an expired ttl
+        "expression": "attribute_not_exists(#id) OR (attribute_exists(#ttl) AND #ttl <= :now)",
+        "expressionNames": {
+          "#id": "id",
+          "#ttl": "ttl"
+        },
+        "expressionValues": {
+          ":now": $util.dynamodb.toDynamoDBJson($ctx.stash.entry_time)
+        }
+      }
+    },
+    {
+      "table": $util.toJson($ctx.stash.healthcheck_table),
+      "operation": "PutItem",
+      "key": {
+        "region": $util.dynamodb.toDynamoDBJson($ctx.stash.region),
+        "id": $util.dynamodb.toDynamoDBJson("healthcheck#${ctx.args.id}")
+      },
+      "attributeValues": {
+        "status": $util.dynamodb.toDynamoDBJson("new"),
+        "ttl": $util.dynamodb.toDynamoDBJson($ttl),
+        "timestamp": $util.dynamodb.toDynamoDBJson($ctx.stash.entry_time)
+      }
+    }
+  ]
+}

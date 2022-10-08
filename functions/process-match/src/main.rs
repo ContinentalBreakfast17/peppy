@@ -172,13 +172,7 @@ impl Client {
             .uri(self.api.clone())
             .body(sdk_body)?;
 
-        match self.sign_request(&mut request).await {
-            Ok(_) => (),
-            Err(e) => {
-                println!("sign request error: {:?}", e);
-                Err("failed to sign request")?
-            }
-        };
+        self.sign_request(&mut request).await?;
 
         let reqw = self.convert_req(request)?;
         let res = self.api_client.execute(reqw)
@@ -204,10 +198,8 @@ impl Client {
             None => return Err("failed to get credentials provider")?
         };
 
-        let now = SystemTime::now();
-
         let request_config = RequestConfig {
-            request_ts: now,
+            request_ts: SystemTime::now(),
             region: &SigningRegion::from(self.region.clone()),
             service: &SigningService::from_static("appsync"),
             payload_override: None,
@@ -226,12 +218,8 @@ impl Client {
     fn convert_req(&self, req: http::Request<SdkBody>) -> Result<reqwest::Request, Box<dyn std::error::Error>> {
         let (head, body) = req.into_parts();
         let url = head.uri.to_string();
-
         let body = {
-            // `SdkBody` doesn't currently impl stream but we can wrap
-            // it in a `ByteStream` and then we're good to go.
             let stream = ByteStream::new(body);
-            // Requires `reqwest` crate feature "stream"
             reqwest::Body::wrap_stream(stream)
         };
 

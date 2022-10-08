@@ -1,5 +1,5 @@
 [package]
-name = "process-match"
+name = "process-healthcheck"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,21 +7,17 @@ edition = "2021"
 RUST_LOG = "warn"
 API_URL = "https://us-east-1.slippi.yeezyfan.club/graphql"
 
+[dependencies.graphql]
+path = "../_rust-pkg/graphql"
+
 [dependencies]
 aws_lambda_events = { version = "0.7", default-features = false, features = ["dynamodb"] }
 lambda_runtime = "0.6.1"
 aws-config = "0.49.0"
+aws-types = "0.49.0"
 tokio = { version = "1", features = ["full"] }
 tracing = { version = "0.1", features = ["log"] }
 tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt"] }
 serde_dynamo = { version = "4", features = ["aws_lambda_events+0_7"] }
-aws-types = "0.49.0"
 serde = "1.0.145"
 futures = "0.3.24"
-aws-sig-auth = "0.49.0"
-aws-smithy-http = "0.49.0"
-http = "0.2.8"
-reqwest = { version = "0.11.12", features = ["stream", "json"] }
-# specifying "vendored" here avoids some headaches cross-compiling this
-openssl = { version = "0.10.41", features = ["vendored"] }
-serde_json = "1.0.85"

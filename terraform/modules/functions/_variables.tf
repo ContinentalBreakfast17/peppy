@@ -6,6 +6,13 @@ variable "name" {
 variable "functions" {
   description = "Function configuration"
   type = object({
+    healthcheck_responder = object({
+      role        = string
+      source_hash = string
+      source_file = string
+      api_url     = string
+    })
+
     ip_lookup = object({
       role        = string
       source_hash = string

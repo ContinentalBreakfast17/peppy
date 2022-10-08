@@ -1,0 +1,5 @@
+subscription {
+  healthcheck(id: "test1") {
+    id
+  }
+}

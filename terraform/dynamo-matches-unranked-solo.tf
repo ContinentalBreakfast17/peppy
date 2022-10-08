@@ -41,10 +41,9 @@ resource "aws_lambda_event_source_mapping" "match_publisher_us_east_1" {
   maximum_batching_window_in_seconds = 2
   maximum_retry_attempts             = 6
 
-  # todo: swap filter for something that enforces at least one regional item?
   filter_criteria {
     filter {
-      pattern = jsonencode(local.dynamo_filters.queue_process)
+      pattern = jsonencode(local.dynamo_filters.publish_match)
     }
   }
 }
@@ -60,7 +59,7 @@ resource "aws_lambda_event_source_mapping" "match_publisher_us_east_2" {
 
   filter_criteria {
     filter {
-      pattern = jsonencode(local.dynamo_filters.queue_process)
+      pattern = jsonencode(local.dynamo_filters.publish_match)
     }
   }
 }

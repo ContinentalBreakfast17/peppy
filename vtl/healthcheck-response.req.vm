@@ -1,0 +1,27 @@
+{
+  "version": "2018-05-29",
+  "operation": "UpdateItem",
+  "key": {
+    "region": $util.dynamodb.toDynamoDBJson($ctx.stash.region),
+    "id": $util.dynamodb.toDynamoDBJson("healthcheck#${ctx.args.id}")
+  },
+  "update": {
+    "expression": "SET #u_status = :responded",
+    "expressionNames": {
+      "#u_status": "status"
+    },
+    "expressionValues": {
+      ":responded": $util.dynamodb.toDynamoDBJson("responded")
+    }
+  },
+  "condition": {
+    "expression": "attribute_exists(#id) AND #c_status = :new",
+    "expressionNames": {
+      "#id": "id",
+      "#c_status": "status"
+    },
+    "expressionValues": {
+      ":new": $util.dynamodb.toDynamoDBJson("new")
+    }
+  }
+}

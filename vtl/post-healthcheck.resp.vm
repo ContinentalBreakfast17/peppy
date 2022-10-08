@@ -1,0 +1,13 @@
+#set ($function = "PostHealthcheck")
+
+#if ($util.isNull($ctx.result) || $ctx.error)
+  $util.log.error({
+    "user": $ctx.stash.user,
+    "function": $function,
+    "code": "Failure",
+    "error": $ctx.error
+  })
+  $util.error("Failed to post healthcheck")
+#else
+  #return ($util.toJson($ctx.result))
+#end

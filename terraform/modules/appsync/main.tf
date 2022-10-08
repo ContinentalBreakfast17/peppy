@@ -26,6 +26,18 @@ resource "aws_appsync_datasource" "noop" {
   type   = "NONE"
 }
 
+resource "aws_appsync_datasource" "healthcheck" {
+  api_id           = aws_appsync_graphql_api.this.id
+  name             = "healthcheck_table"
+  service_role_arn = var.role
+  type             = "AMAZON_DYNAMODB"
+
+  dynamodb_config {
+    table_name = var.tables.healthcheck
+  }
+}
+
+
 resource "aws_appsync_datasource" "ip_cache" {
   api_id           = aws_appsync_graphql_api.this.id
   name             = "ip_cache_table"

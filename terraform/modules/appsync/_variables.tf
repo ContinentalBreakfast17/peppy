@@ -34,6 +34,7 @@ variable "paths" {
 variable "tables" {
   description = "Table names"
   type = object({
+    healthcheck         = string
     ip_cache            = string
     queue_unranked_solo = string
     mmr_unranked_solo   = string

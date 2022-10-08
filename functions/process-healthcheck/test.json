@@ -1,0 +1,34 @@
+{
+  "Records": [
+    {
+      "eventID": "abcdefg",
+      "eventName": "INSERT",
+      "eventVersion": "1.1",
+      "eventSource": "aws:dynamodb",
+      "awsRegion": "us-east-1",
+      "dynamodb": {
+        "ApproximateCreationDateTime": 1664656047,
+        "Keys": {
+          "region": {
+            "S": "us-east-1"
+          },
+          "id": {
+            "S": "healthcheck#test1"
+          }
+        },
+        "NewImage": {
+          "region": {
+            "S": "us-east-1"
+          },
+          "id": {
+            "S": "healthcheck#test1"
+          }
+        },
+        "SequenceNumber": "846600000000096780307802",
+        "SizeBytes": 100000,
+        "StreamViewType": "NEW_AND_OLD_IMAGES"
+      },
+      "eventSourceARN": "arn:aws:dynamodb:us-east-1:123456789123:table/healthcheck/stream/2022-10-01T14:48:34.824"
+    }
+  ]
+}

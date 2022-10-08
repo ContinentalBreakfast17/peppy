@@ -1,0 +1,63 @@
+tests:
+  # request checks
+  - name: Req
+    file: &req-file post-healthcheck.req.vm
+    context:
+      arguments:
+        id: "12345"
+      stash:
+        region: us-east-1
+        healthcheck_table: some_table
+        entry_time: 100
+    expect:
+      version: '2018-05-29'
+      operation: TransactWriteItems
+      transactItems:
+      - table: some_table
+        operation: ConditionCheck
+        key:
+          region:
+            S: us-east-1
+          id:
+            S: block
+        condition: {
+          "expression": "attribute_not_exists(#id) OR (attribute_exists(#ttl) AND #ttl <= :now)",
+          "expressionNames": {
+            "#id": "id",
+            "#ttl": "ttl"
+          },
+          "expressionValues": {
+            ":now": {
+              "N": 100
+            }
+          }
+        }
+      - table: some_table
+        operation: PutItem
+        key:
+          region:
+            S: us-east-1
+          id:
+            S: healthcheck#12345
+        attributeValues:
+          status:
+            S: new
+          ttl:
+            N: 6100
+          timestamp:
+            N: 100
+
+  # response checks
+  - name: Resp - Success
+    file: &resp-file post-healthcheck.resp.vm
+    context:
+      result: {}
+    expect: {}
+
+  - name: Resp - Error
+    file: *resp-file
+    context:
+      error:
+        message: error
+        type: error
+    error: true

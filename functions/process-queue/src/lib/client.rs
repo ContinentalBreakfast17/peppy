@@ -27,7 +27,7 @@ pub trait Identifiable {
 }
 
 const MAX_FAILURES: i32 = 5;
-const CONCURRENT_REQUESTS: usize = 2;
+const CONCURRENT_REQUESTS: usize = 4;
 static AWS_CONFIG: once_cell::sync::OnceCell<aws_config::SdkConfig> = once_cell::sync::OnceCell::new();
 static LOCK_REGIONS: once_cell::sync::OnceCell<String> = once_cell::sync::OnceCell::new();
 
@@ -73,7 +73,7 @@ async fn run_wrapper<QueueItem: serde::de::DeserializeOwned + serde::Serialize +
                 Ok(_) => println!("recorded error"),
                 Err(re) => println!("failed to record error: {:?}", re)
             };
-            Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, "failure")))
+            Err(e)
         }
     }
 }

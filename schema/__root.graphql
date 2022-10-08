@@ -5,15 +5,21 @@ schema {
 }
 
 type Query {
-  placeholder: String
+  region: String!
 }
 
 type Mutation {
+  publishHealth(id: ID!): HealthNotification @aws_iam
   publishMatch(queue: String!, sessionId: ID!, players: [PlayerInput!]!): QueueNotification @aws_iam
 }
 
 type Subscription {
+  healthcheck(id: ID!): HealthNotification @aws_iam @aws_subscribe(mutations: ["publishHealth"])
   joinUnrankedSoloQueue(userId: String!): QueueNotification @aws_subscribe(mutations: ["publishMatch"])
+}
+
+type HealthNotification {
+  id: ID! @aws_iam
 }
 
 union QueueNotification = Match | Heartbeat

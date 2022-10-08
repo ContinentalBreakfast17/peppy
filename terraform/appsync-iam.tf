@@ -40,6 +40,7 @@ data "aws_iam_policy_document" "appsync_custom" {
     effect  = "Allow"
     actions = ["dynamodb:*Item"]
     resources = [
+      replace(aws_dynamodb_table.healthcheck.arn, "us-east-1", "*"),
       replace(aws_dynamodb_table.ip_cache.arn, "us-east-1", "*"),
       replace(aws_dynamodb_table.queue_unranked_solo.arn, "us-east-1", "*"),
       replace(aws_dynamodb_table.mmr_unranked_solo.arn, "us-east-1", "*"),

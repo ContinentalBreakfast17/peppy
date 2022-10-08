@@ -4,8 +4,19 @@ locals {
   }
 
   dynamo_filters = {
+    # todo: check region match
     queue_process = {
       eventName = ["MODIFY", "INSERT"]
+    }
+
+    # todo: check region match
+    publish_match = {
+      eventName = ["MODIFY", "INSERT"]
+    }
+
+    # todo: check region match
+    healthcheck = {
+      eventName = ["INSERT"]
     }
   }
 }

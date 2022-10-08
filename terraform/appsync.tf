@@ -16,6 +16,7 @@ module "appsync_us_east_1" {
   }
 
   tables = {
+    healthcheck         = aws_dynamodb_table.healthcheck.id
     ip_cache            = aws_dynamodb_table.ip_cache.id
     queue_unranked_solo = aws_dynamodb_table.queue_unranked_solo.id
     mmr_unranked_solo   = aws_dynamodb_table.mmr_unranked_solo.id
@@ -45,6 +46,7 @@ module "appsync_us_east_2" {
   }
 
   tables = {
+    healthcheck         = aws_dynamodb_table.healthcheck.id
     ip_cache            = aws_dynamodb_table.ip_cache.id
     queue_unranked_solo = aws_dynamodb_table.queue_unranked_solo.id
     mmr_unranked_solo   = aws_dynamodb_table.mmr_unranked_solo.id
