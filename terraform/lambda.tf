@@ -1,3 +1,10 @@
+data "archive_file" "fn_healthcheck" {
+  type        = "zip"
+  source_dir  = "${path.root}/../functions/healthcheck/target/lambda/healthcheck"
+  output_path = "${path.root}/../functions/healthcheck/target/lambda/healthcheck/code.zip"
+  excludes    = ["*.zip"]
+}
+
 data "archive_file" "fn_healthcheck_responder" {
   type        = "zip"
   source_dir  = "${path.root}/../functions/process-healthcheck/target/lambda/process-healthcheck"
@@ -33,6 +40,13 @@ module "functions_us_east_1" {
   name   = var.name
 
   functions = {
+    healthcheck = {
+      role        = aws_iam_role.healthcheck.arn
+      source_file = data.archive_file.fn_healthcheck.output_path
+      source_hash = data.archive_file.fn_healthcheck.output_base64sha256
+      api_url     = local.regional_url
+    }
+
     healthcheck_responder = {
       role        = aws_iam_role.healthcheck_responder.arn
       source_file = data.archive_file.fn_healthcheck_responder.output_path
@@ -73,6 +87,13 @@ module "functions_us_east_2" {
   name      = var.name
 
   functions = {
+    healthcheck = {
+      role        = aws_iam_role.healthcheck.arn
+      source_file = data.archive_file.fn_healthcheck.output_path
+      source_hash = data.archive_file.fn_healthcheck.output_base64sha256
+      api_url     = local.regional_url
+    }
+
     healthcheck_responder = {
       role        = aws_iam_role.healthcheck_responder.arn
       source_file = data.archive_file.fn_healthcheck_responder.output_path

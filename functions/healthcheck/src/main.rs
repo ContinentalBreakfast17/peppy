@@ -1,10 +1,6 @@
-// todo: implement the following
-// - this function sends a subscription request (https://stackoverflow.com/questions/73317229/how-to-set-origin-header-to-websocket-client-in-rust)
-// - app sync runs ip lookup function, then places item in healthcheck table
-// - stream reads healthcheck table (regional items only), then pushes mutation
-// - this function sees the message + terminates
-// - we should through a lambda -> dynamo action in there somewhere, and maybe a transaction? just in case those break specifically (maybe just updating the healthcheck item?)
-// match processor should read the cloudwatch alarm for its region + refuse to process if it is in alarm (to prevent a broken region from acquiring the lock)
+// todo:
+// - consider updating status of healthcheck at the end
+// - match processor should read the cloudwatch alarm for its region + refuse to process if it is in alarm (to prevent a broken region from acquiring the lock)
 
 use aws_lambda_events::event::cloudwatch_events::CloudWatchEvent;
 use lambda_runtime::{service_fn, Error, LambdaEvent};
@@ -15,12 +11,17 @@ struct Client {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+struct HealthcheckResponse {
+    healthcheck: Option<Healthcheck>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 struct Healthcheck {
     id: String,
 }
 
 const HEALTCHECK_QUERY: &str = "
-subscription ($id: ID!){
+subscription($id: ID!){
     healthcheck(id: $id) {
         id
     }
@@ -30,31 +31,31 @@ subscription ($id: ID!){
 impl Client {
     async fn new() -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
         let config = aws_config::load_from_env().await;
-        let api = std::env::var("API_URL").unwrap_or("API_URL not set");
-        Ok(Self { client: graphql::Client::new(&config, api) })
+        let region = config.region().ok_or("No region in config")?.clone();
+        let api = std::env::var("API_URL")?;
+        let client = graphql::Client::new(config, region.clone(), api).await?;
+        Ok(Self { client })
     }
 
-    async fn run(&self, event: LambdaEvent<CloudWatchEvent>) -> Result<(), Error> {
-        println!("{:?}", event);
+    async fn run(&self, event: LambdaEvent<CloudWatchEvent>) -> Result<(),  Box<dyn std::error::Error + Send + Sync>> {
+        println!("event id: {:?}", event.payload.id);
         let id = ksuid::Ksuid::generate();
 
-        self.healthcheck(id).await
-    }
-
-    async fn healthcheck(&self, id: ksuid::Ksuid) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        let req = GraphqlRequest{
+        let req = graphql::GraphqlRequest{
             query: HEALTCHECK_QUERY.to_string(),
-            vars: Healthcheck{id: id.to_base62()}
+            variables: Healthcheck{id: id.to_base62()}
         };
 
-        let resp = self.client.query::<Healthcheck>(req).await?;
-        match res.errors.iter().len() == 0 {
-            true => Ok(item),
-            false => {
-                println!("{:?}", res);
-                Err("graphql call failed")?
-            }
-        }
+        self.client.subscribe(req, process_subscription, 2000, 10000).await
+    }
+}
+
+async fn process_subscription(response: graphql::GraphqlResponse<HealthcheckResponse>) -> Result<Option<()>, Box<dyn std::error::Error + Send + Sync>> {
+    println!("{:?}", response);
+    match response.errors.iter().len() == 0 {
+        // exit as soon as we get one success
+        true => Ok(None),
+        false => Err("graphql call failed")?
     }
 }
 

@@ -5,7 +5,7 @@ edition = "2021"
 
 [package.metadata.lambda.env]
 RUST_LOG = "warn"
-API_URL = "https://us-east-1.slippi.yeezyfan.club/graphql"
+API_URL = "wss://us-east-1.slippi.yeezyfan.club/graphql"
 
 [dependencies.graphql]
 path = "../_rust-pkg/graphql"

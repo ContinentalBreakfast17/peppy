@@ -138,7 +138,7 @@ impl Client {
                         println!("{:?}", resp);
                         Err(format!("graphql call failed - {}", item.id))?
                     }
-                }                        
+                }
             }
         }
     }

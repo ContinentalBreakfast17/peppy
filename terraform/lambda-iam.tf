@@ -15,6 +15,50 @@ data "aws_iam_policy" "lambda_logs" {
 
 ########
 #
+# Healthcheck
+#
+resource "aws_iam_role" "healthcheck" {
+  name               = "healthcheck"
+  path               = "/${var.name}/functions/"
+  assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
+}
+
+resource "aws_iam_role_policy_attachment" "healthcheck_kms" {
+  role       = aws_iam_role.healthcheck.name
+  policy_arn = aws_iam_policy.kms_decrypt.arn
+}
+
+resource "aws_iam_role_policy_attachment" "healthcheck_logs" {
+  role       = aws_iam_role.healthcheck.name
+  policy_arn = data.aws_iam_policy.lambda_logs.arn
+}
+
+resource "aws_iam_role_policy" "healthcheck_custom" {
+  role   = aws_iam_role.healthcheck.name
+  policy = data.aws_iam_policy_document.healthcheck_custom.json
+}
+
+data "aws_iam_policy_document" "healthcheck_custom" {
+  statement {
+    sid       = "AllowUpdateDynamo"
+    effect    = "Allow"
+    actions   = ["dynamodb:UpdateItem", "dynamodb:ConditionCheckItem"]
+    resources = [replace(aws_dynamodb_table.healthcheck.arn, "us-east-1", "*")]
+  }
+
+  statement {
+    sid     = "ApiAccess"
+    effect  = "Allow"
+    actions = ["appsync:GraphQL"]
+    resources = [
+      "arn:aws:appsync:*:${data.aws_caller_identity.current.account_id}:apis/*/types/Subscription/fields/healthcheck",
+      "arn:aws:appsync:*:${data.aws_caller_identity.current.account_id}:apis/*/types/HealthNotification/fields/*",
+    ]
+  }
+}
+
+########
+#
 # Healthcheck Responder
 #
 resource "aws_iam_role" "healthcheck_responder" {

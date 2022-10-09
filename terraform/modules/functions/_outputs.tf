@@ -2,6 +2,12 @@ output "region" {
   value = data.aws_region.current.name
 }
 
+output "healthcheck" {
+  value = {
+    arn = aws_lambda_function.healthcheck_responder.arn,
+  }
+}
+
 output "healthcheck_responder" {
   value = {
     arn = aws_lambda_function.healthcheck_responder.arn,
