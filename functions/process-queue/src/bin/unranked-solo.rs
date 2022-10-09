@@ -12,6 +12,7 @@ struct QueueItem {
     mmr: i64,
     join_time: i64,
     coordinates: Coordinates,
+    queue: String,
     #[serde(default)]
     wait_count: i64,
 }

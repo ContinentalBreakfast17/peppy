@@ -73,7 +73,7 @@ async fn run_wrapper<QueueItem: serde::de::DeserializeOwned + serde::Serialize +
                 Ok(_) => println!("recorded error"),
                 Err(re) => println!("failed to record error: {:?}", re)
             };
-            Err(e)
+            Err("failure")?
         }
     }
 }
@@ -381,6 +381,7 @@ impl<QueueItem: serde::de::DeserializeOwned + serde::Serialize + Identifiable> C
                             .item("sessionId", dynamodb::model::AttributeValue::S(execution_id.to_base62()))
                             .item("timestamp", dynamodb::model::AttributeValue::N(execution_id.time().sec.to_string()))
                             .item("ttl", dynamodb::model::AttributeValue::N((execution_id.time().sec + 3600).to_string()))
+                            .item("queue", dynamodb::model::AttributeValue::S(self.queue_table.clone()))
                             .item("players", players_av)
                             .build()
                     )

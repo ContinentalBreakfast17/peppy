@@ -8,8 +8,8 @@ resource "aws_lambda_function" "queue_processer_unranked_solo" {
   source_code_hash = var.functions.queue_processer_unranked_solo.source_hash
   filename         = var.functions.queue_processer_unranked_solo.source_file
   description      = "Makes matches based on the unranked solo queue"
-  handler          = "test.handler"
-  runtime          = "python3.9"
+  handler          = "bootstrap"
+  runtime          = "provided.al2"
   architectures    = ["arm64"]
   timeout          = 15
   memory_size      = 128

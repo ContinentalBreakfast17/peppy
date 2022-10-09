@@ -15,7 +15,7 @@ resource "aws_appsync_resolver" "Query_region" {
   type        = "Query"
   field       = "region"
 
-  request_template  = "{}"
+  request_template  = jsonencode({ version = "2017-02-28", payload = {} })
   response_template = jsonencode({ region = data.aws_region.current.name })
 }
 

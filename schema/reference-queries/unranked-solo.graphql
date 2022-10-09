@@ -1,35 +1,17 @@
-subscription Join{
+subscription {
   joinUnrankedSoloQueue(userId: "aws#521") {
-    sessionId
-    userId
-    opponent {
-      userId
-      username
-      ip
+    __typename
+    ... on Match {
+      queue
+      sessionId
+      playerIds
+      players {
+        ip
+        userId
+      }
     }
-  }
-}
-
-mutation Match{
-  unrankedSoloMatch(
-    sessionId: "123"
-    player1: {
-      userId: "aws#521"
-      username: "DynamoDB"
-      ip: "1.2.3.4"
-    }
-    player2: {
-      userId: "hugs#86"
-      username: "Hugo"
-      ip: "1.2.3.4"
-    }
-  ) {
-    sessionId
-    userId
-    opponent {
-      userId
-      username
-      ip
+    ... on Heartbeat {
+      timestamp
     }
   }
 }

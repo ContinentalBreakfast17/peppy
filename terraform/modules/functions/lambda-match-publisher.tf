@@ -7,7 +7,7 @@ resource "aws_lambda_function" "match_publisher" {
   role             = var.functions.match_publisher.role
   source_code_hash = var.functions.match_publisher.source_hash
   filename         = var.functions.match_publisher.source_file
-  description      = "Alerts players of matches"
+  description      = "Notifies players of matches"
   handler          = "bootstrap"
   runtime          = "provided.al2"
   architectures    = ["arm64"]
