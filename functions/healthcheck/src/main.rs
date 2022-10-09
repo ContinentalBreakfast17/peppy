@@ -1,13 +1,13 @@
-// todo:
-// - consider updating status of healthcheck at the end
-// - match processor should read the cloudwatch alarm for its region + refuse to process if it is in alarm (to prevent a broken region from acquiring the lock)
-
 use aws_lambda_events::event::cloudwatch_events::CloudWatchEvent;
+use aws_sdk_dynamodb as dynamodb;
 use lambda_runtime::{service_fn, Error, LambdaEvent};
 use serde::{Serialize, Deserialize};
 
 struct Client {
-    client: graphql::Client,
+    client:        graphql::Client,
+    region:        String,
+    table:         String,
+    dynamo_client: dynamodb::Client,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -33,8 +33,10 @@ impl Client {
         let config = aws_config::load_from_env().await;
         let region = config.region().ok_or("No region in config")?.clone();
         let api = std::env::var("API_URL")?;
-        let client = graphql::Client::new(config, region.clone(), api).await?;
-        Ok(Self { client })
+        let table = std::env::var("TABLE")?;
+        let client = graphql::Client::new(config.clone(), region.clone(), api).await?;
+        let dynamo_client = dynamodb::Client::new(&config);
+        Ok(Self { client, region: region.to_string(), table, dynamo_client })
     }
 
     async fn run(&self, event: LambdaEvent<CloudWatchEvent>) -> Result<(),  Box<dyn std::error::Error + Send + Sync>> {
@@ -46,7 +48,23 @@ impl Client {
             variables: Healthcheck{id: id.to_base62()}
         };
 
-        self.client.subscribe(req, process_subscription, 2000, 10000).await
+        self.client.subscribe(req, process_subscription, 2000, 10000).await?;
+
+        let completion_ts = ksuid::Ksuid::generate().time().sec;
+        self.dynamo_client.update_item()
+            .table_name(&self.table)
+            .key("region", dynamodb::model::AttributeValue::S(self.region.clone()))
+            .key("id", dynamodb::model::AttributeValue::S(format!("healthcheck#{}", id.to_base62())))
+            .update_expression("SET #timestamp = :now, #status = :complete")
+            .condition_expression("attribute_exists(#status) AND #status = :responded")
+            .expression_attribute_names("#timestamp", "timestamp_completed")
+            .expression_attribute_names("#status", "status")
+            .expression_attribute_values(":now", dynamodb::model::AttributeValue::N(completion_ts.to_string()))
+            .expression_attribute_values(":complete", dynamodb::model::AttributeValue::S("complete".to_string()))
+            .expression_attribute_values(":responded", dynamodb::model::AttributeValue::S("responded".to_string()))
+            .send().await?;
+
+        Ok(())
     }
 }
 

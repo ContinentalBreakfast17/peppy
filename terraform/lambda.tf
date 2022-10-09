@@ -22,16 +22,16 @@ data "archive_file" "fn_ip_lookup" {
 
 data "archive_file" "fn_match_publisher" {
   type        = "zip"
-  source_dir  = "${path.root}/../functions/process-queue/target/lambda/unranked-solo"
-  output_path = "${path.root}/../functions/process-queue/target/lambda/unranked-solo/code.zip"
+  source_dir  = "${path.root}/../functions/process-match/target/lambda/process-match"
+  output_path = "${path.root}/../functions/process-match/target/lambda/process-match/code.zip"
   excludes    = ["*.zip"]
 }
 
 
 data "archive_file" "fn_queue_processer_unranked_solo" {
   type        = "zip"
-  source_dir  = "${path.root}/../functions/test"
-  output_path = "${path.root}/../functions/test/code.zip"
+  source_dir  = "${path.root}/../functions/process-queue/target/lambda/unranked-solo"
+  output_path = "${path.root}/../functions/process-queue/target/lambda/unranked-solo/code.zip"
   excludes    = ["*.zip"]
 }
 
@@ -45,6 +45,7 @@ module "functions_us_east_1" {
       source_file = data.archive_file.fn_healthcheck.output_path
       source_hash = data.archive_file.fn_healthcheck.output_base64sha256
       api_url     = local.regional_url
+      table       = aws_dynamodb_table.healthcheck.id
     }
 
     healthcheck_responder = {
@@ -92,6 +93,7 @@ module "functions_us_east_2" {
       source_file = data.archive_file.fn_healthcheck.output_path
       source_hash = data.archive_file.fn_healthcheck.output_base64sha256
       api_url     = local.regional_url
+      table       = aws_dynamodb_table.healthcheck.id
     }
 
     healthcheck_responder = {

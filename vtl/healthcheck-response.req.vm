@@ -6,12 +6,14 @@
     "id": $util.dynamodb.toDynamoDBJson("healthcheck#${ctx.args.id}")
   },
   "update": {
-    "expression": "SET #u_status = :responded",
+    "expression": "SET #u_status = :responded, #timestamp = :now",
     "expressionNames": {
-      "#u_status": "status"
+      "#u_status": "status",
+      "#timestamp": "timestamp_responded"
     },
     "expressionValues": {
-      ":responded": $util.dynamodb.toDynamoDBJson("responded")
+      ":responded": $util.dynamodb.toDynamoDBJson("responded"),
+      ":now": $util.dynamodb.toDynamoDBJson($ctx.stash.entry_time)
     }
   },
   "condition": {

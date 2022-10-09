@@ -11,6 +11,7 @@ variable "functions" {
       source_hash = string
       source_file = string
       api_url     = string
+      table       = string
     })
 
     healthcheck_responder = object({

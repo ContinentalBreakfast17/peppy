@@ -17,6 +17,7 @@ resource "aws_lambda_function" "healthcheck" {
 
   environment {
     variables = {
+      TABLE   = var.functions.healthcheck.table,
       API_URL = replace(var.functions.healthcheck.api_url, "<region>", data.aws_region.current.name),
     }
   }

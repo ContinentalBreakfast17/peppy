@@ -6,6 +6,7 @@ edition = "2021"
 [package.metadata.lambda.env]
 RUST_LOG = "warn"
 API_URL = "wss://us-east-1.slippi.yeezyfan.club/graphql"
+TABLE = "slippi-api-healthcheck"
 
 [dependencies.graphql]
 path = "../_rust-pkg/graphql"
@@ -19,3 +20,4 @@ tokio = { version = "1", features = ["full"] }
 tracing = { version = "0.1", features = ["log"] }
 tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt"] }
 serde = "1.0.145"
+aws-sdk-dynamodb = "0.19.0"

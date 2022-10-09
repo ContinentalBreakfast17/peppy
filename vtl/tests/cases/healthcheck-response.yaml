@@ -7,6 +7,7 @@ tests:
         id: "12345"
       stash:
         region: us-east-1
+        entry_time: 100
     expect:
       version: '2018-05-29'
       operation: UpdateItem
@@ -16,13 +17,17 @@ tests:
         id:
           S: "healthcheck#12345"
       update: {
-        "expression": "SET #u_status = :responded",
+        "expression": "SET #u_status = :responded, #timestamp = :now",
         "expressionNames": {
-          "#u_status": "status"
+          "#u_status": "status",
+          "#timestamp": "timestamp_responded"
         },
         "expressionValues": {
           ":responded": {
             "S": "responded"
+          },
+          ":now": {
+            "N": 100
           }
         }
       }
