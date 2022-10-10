@@ -4,7 +4,8 @@ output "region" {
 
 output "healthcheck" {
   value = {
-    arn = aws_lambda_function.healthcheck_responder.arn,
+    arn  = aws_lambda_function.healthcheck.arn,
+    name = aws_lambda_function.healthcheck.function_name,
   }
 }
 

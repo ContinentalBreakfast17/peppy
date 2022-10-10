@@ -17,11 +17,17 @@ terraform {
 
 provider "aws" {
   region = "us-east-1"
+  default_tags {
+    tags = local.tags
+  }
 }
 
 provider "aws" {
   region = "us-east-2"
   alias  = "us_east_2"
+  default_tags {
+    tags = local.tags
+  }
 }
 
 # if terraform ever supports dynamic providers this can be used, until then :(

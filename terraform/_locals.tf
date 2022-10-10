@@ -25,3 +25,9 @@ locals {
   domain_name  = "${var.subdomain}.${var.domain_name}"
   regional_url = "https://<region>.${local.domain_name}/graphql"
 }
+
+locals {
+  tags = {
+    project = var.name
+  }
+}

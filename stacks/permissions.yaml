@@ -108,6 +108,7 @@ Resources:
               - iam:ListAccountAliases
               - iam:ListPolicies
               - iam:ListRoles
+              - iam:ListInstanceProfilesForRole
             Resource:
               - "*"
 
@@ -203,7 +204,6 @@ Resources:
               - kms:GenerateDataKey*
             Resource:
               - !Sub "arn:aws:kms:*:${AWS::AccountId}:key/*"
-              # - !Sub "arn:aws:kms:*:${AWS::AccountId}:alias/${Prefix}*"
             Condition:
               ForAnyValue:StringLike:
                 kms:ResourceAliases:
@@ -372,17 +372,82 @@ Resources:
               - route53:ListResourceRecordSets
               - route53:ListTagsForResource
             Resource:
-              - !Sub "arn:aws:route53:::hostedzone/*"
+              - "arn:aws:route53:::hostedzone/*"
 
           - Effect: Allow
             Action:
               - route53:GetChange
             Resource:
-              - !Sub "arn:aws:route53:::change/*"
+              - "arn:aws:route53:::change/*"
 
           - Effect: Allow
             Action:
               - route53:ListHostedZones*
               - route53:TestDNSAnswer
+            Resource:
+              - "*"
+
+          ## eventbridge
+          - Effect: Allow
+            Action:
+              - events:*Rule
+              - events:*Targets
+              - events:ListTagsForResource
+              - events:TagResource
+              - events:UntagResource
+            Resource:
+              - !Sub "arn:aws:events:*:${AWS::AccountId}:rule/${Prefix}*"
+
+          - Effect: Allow
+            Action:
+              - events:DescribeEventBus
+              - events:ListEventBuses
+              - events:ListRules
+            Resource:
+              - "*"
+
+          ## cloudwatch
+          - Effect: Allow
+            Action:
+              - cloudwatch:DeleteAlarms
+              - cloudwatch:DescribeAlarms
+              - cloudwatch:DisableAlarmActions
+              - cloudwatch:EnableAlarmActions
+              - cloudwatch:ListTagsForResource
+              - cloudwatch:PutMetricAlarm
+              - cloudwatch:TagResource
+              - cloudwatch:UntagResource
+            Resource:
+              - !Sub "arn:aws:cloudwatch:*:${AWS::AccountId}:alarm:${Prefix}*"
+
+          - Effect: Allow
+            Action:
+              - cloudwatch:DeleteDashboards
+              - cloudwatch:PutDashboard
+            Resource:
+              - !Sub "arn:aws:cloudwatch::${AWS::AccountId}:dashboard/${Prefix}*"
+
+          - Effect: Allow
+            Action:
+              - cloudwatch:ListDashboards
+            Resource:
+              - "*"
+
+          ## resource groups
+          - Effect: Allow
+            Action:
+              - resource-groups:*Group*
+              - resource-groups:GetTags
+              - resource-groups:GroupResources
+              - resource-groups:Tag
+              - resource-groups:UngroupResources
+              - resource-groups:Untag
+            Resource:
+              - !Sub "arn:aws:resource-groups:*:${AWS::AccountId}:group/${Prefix}*"
+
+          - Effect: Allow
+            Action:
+              - resource-groups:CreateGroup
+              - resource-groups:ListGroups
             Resource:
               - "*"
