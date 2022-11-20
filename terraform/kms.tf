@@ -26,6 +26,17 @@ data "aws_iam_policy_document" "main_key" {
       )
     }
   }
+
+  statement {
+    sid       = "AllowCloudwatchAlarms"
+    effect    = "Allow"
+    actions   = ["kms:Decrypt", "kms:GenerateDataKey*"]
+    resources = ["*"]
+    principals {
+      type        = "Service"
+      identifiers = ["cloudwatch.amazonaws.com", "sns.amazonaws.com"]
+    }
+  }
 }
 
 module "main_key_replica_us_east_2" {

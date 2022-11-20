@@ -14,6 +14,8 @@ resource "aws_cloudwatch_metric_alarm" "healthcheck_failures" {
   period              = 60
   datapoints_to_alarm = each.value.alarm_at
   treat_missing_data  = "breaching"
+  alarm_actions       = [aws_sns_topic.alarms.arn]
+  ok_actions          = [aws_sns_topic.alarms.arn]
   tags                = local.tags
 
   dimensions = {

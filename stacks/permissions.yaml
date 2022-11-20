@@ -366,13 +366,27 @@ Resources:
           ## route53
           - Effect: Allow
             Action:
-              - route53:ChangeTagsForResource
               - route53:ChangeResourceRecordSets
               - route53:GetHostedZone
               - route53:ListResourceRecordSets
+            Resource:
+              - "arn:aws:route53:::hostedzone/*"
+
+          - Effect: Allow
+            Action:
+              - route53:ChangeTagsForResource
               - route53:ListTagsForResource
             Resource:
               - "arn:aws:route53:::hostedzone/*"
+              - "arn:aws:route53:::healthcheck/*"
+
+          - Effect: Allow
+            Action:
+              - route53:DeleteHealthCheck
+              - route53:GetHealthCheck*
+              - route53:UpdateHealthCheck
+            Resource:
+              - "arn:aws:route53:::healthcheck/*"
 
           - Effect: Allow
             Action:
@@ -382,7 +396,10 @@ Resources:
 
           - Effect: Allow
             Action:
+              - route53:CreateHealthCheck
+              - route53:GetHealthCheckCount
               - route53:ListHostedZones*
+              - route53:ListHealthChecks
               - route53:TestDNSAnswer
             Resource:
               - "*"
@@ -449,5 +466,29 @@ Resources:
             Action:
               - resource-groups:CreateGroup
               - resource-groups:ListGroups
+            Resource:
+              - "*"
+
+          ## sns
+          - Effect: Allow
+            Action:
+              - sns:AddPermission
+              - sns:CreateTopic
+              - sns:DeleteTopic
+              - sns:Get*
+              - sns:ListSubscriptionsByTopic
+              - sns:ListTagsForResource
+              - sns:RemovePermission
+              - sns:Set*
+              - sns:Subscribe
+              - sns:TagResource
+              - sns:UntagResource
+            Resource:
+              - !Sub "arn:aws:sns:*:${AWS::AccountId}:${Prefix}*"
+
+          - Effect: Allow
+            Action:
+              - sns:ListTopics
+              - sns:Unsubscribe
             Resource:
               - "*"

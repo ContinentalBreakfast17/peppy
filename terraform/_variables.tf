@@ -14,6 +14,11 @@ variable "subdomain" {
   default     = "slippi"
 }
 
+variable "send_alarms_to" {
+  description = "List of email addresses to send alarms to"
+  type        = list(string)
+}
+
 variable "enable_queue_processing" {
   description = "Whether or not to enable matchmaking queue processing"
   type        = bool

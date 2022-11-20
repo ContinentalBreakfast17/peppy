@@ -31,6 +31,13 @@ variable "paths" {
   })
 }
 
+variable "alarms" {
+  description = "CloudWatch Alarm ARN's used for healthchecks"
+  type = object({
+    cron = string
+  })
+}
+
 variable "tables" {
   description = "Table names"
   type = object({

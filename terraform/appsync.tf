@@ -15,6 +15,10 @@ module "appsync_us_east_1" {
     cert        = aws_acm_certificate.api_wildcard.arn
   }
 
+  alarms = {
+    cron = module.alarms_us_east_1.healthcheck_failures.errors_fail.alarm_name
+  }
+
   tables = {
     healthcheck         = aws_dynamodb_table.healthcheck.id
     ip_cache            = aws_dynamodb_table.ip_cache.id
@@ -43,6 +47,10 @@ module "appsync_us_east_2" {
     domain_name = local.domain_name
     zone_id     = data.aws_route53_zone.domain_name.zone_id
     cert        = aws_acm_certificate.api_wildcard.arn
+  }
+
+  alarms = {
+    cron = module.alarms_us_east_2.healthcheck_failures.errors_fail.alarm_name
   }
 
   tables = {
