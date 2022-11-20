@@ -23,13 +23,11 @@ resource "aws_dynamodb_table" "healthcheck" {
   }
 
   server_side_encryption {
-    enabled     = true
-    kms_key_arn = aws_kms_key.main.arn
+    enabled = false
   }
 
   replica {
     region_name    = module.main_key_replica_us_east_2.region
-    kms_key_arn    = module.main_key_replica_us_east_2.key.arn
     propagate_tags = true
   }
 }

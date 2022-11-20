@@ -12,9 +12,11 @@ There are a handful of lambda functions that support this, all of which are writ
 I knew 0 Rust going into this so I'm sure the code can use many improvements.
 
 todo:
-- healthcheck cron/alarm (function implemented 90%)
+- route53 healthcheck (alarm in place)
 - queue heartbeat
 - filter out recent matches
 - process game results
 - rust unit tests
 - integration tests
+
+jmook skilled player but that is not normally, This very very insane....They need to check him controller and disc.....Maybe he not cheating but maybe he using the game deficit ...and this cant seem on game screen..He needs to check-up
