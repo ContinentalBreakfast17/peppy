@@ -2,17 +2,17 @@ name: Build and Upload Function Code
 
 on:
   workflow_dispatch: {}
-  push:
-    paths:
-      - '.github/workflows/functions.yml'
-      - 'functions/**'
+  push: {}
+    # paths:
+    #   - '.github/workflows/functions.yml'
+    #   - 'functions/**'
 
 env:
   AWS_REGION: "us-east-1"
 
 jobs:
   build:
-    name: Build and Package
+    name: Build and Upload
     runs-on: ubuntu-20.04
     permissions:
       id-token: write
