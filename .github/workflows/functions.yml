@@ -22,6 +22,15 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v2
 
+      - name: ⚡ Cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          # target (don't want target/lambda?)
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
       - name: Assume Role
         uses: aws-actions/configure-aws-credentials@v1
         with:
