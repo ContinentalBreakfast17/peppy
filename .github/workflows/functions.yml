@@ -28,8 +28,13 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
+            ~/.cache/sccache
           # target (don't want target/lambda?)
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          # key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-test
+          restore-keys: |
+            ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+            ${{ runner.os }}-cargo-
 
       - name: Assume Role
         uses: aws-actions/configure-aws-credentials@v1
@@ -51,11 +56,11 @@ jobs:
           RUSTC_WRAPPER: sccache
         run: cargo install cargo-lambda
 
-      - name: Build
-        working-directory: functions
-        env:
-          RUSTC_WRAPPER: sccache
-        run: ./build.sh
+      # - name: Build
+      #   working-directory: functions
+      #   env:
+      #     RUSTC_WRAPPER: sccache
+      #   run: ./build.sh
 
       # - name: Upload Artifacts
       #   working-directory: functions
