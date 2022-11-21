@@ -48,6 +48,7 @@ jobs:
         with:
           command: install
           args: cargo-lambda
+          toolchain: stable
 
       # - name: Build
       #   working-directory: functions
