@@ -1,11 +1,11 @@
 name: Build and Upload Function Code
 
-on: [push]
-  # workflow_dispatch: {}
-  # push: {}
-  #   # paths:
-  #   #   - '.github/workflows/functions.yml'
-  #   #   - 'functions/**'
+on:
+  workflow_dispatch: {}
+  push:
+    paths:
+      - '.github/workflows/functions.yml'
+      - 'functions/**'
 
 env:
   AWS_REGION: "us-east-1"
@@ -22,31 +22,31 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v2
 
-      - name: Assume Role
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          role-to-assume: ${{ secrets.ROLE }}
-          role-session-name: GitHub-Action-Role
-          aws-region: ${{ env.AWS_REGION }}
+      # - name: Assume Role
+      #   uses: aws-actions/configure-aws-credentials@v1
+      #   with:
+      #     role-to-assume: ${{ secrets.ROLE }}
+      #     role-session-name: GitHub-Action-Role
+      #     aws-region: ${{ env.AWS_REGION }}
 
-      - name: Add Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
+      # - name: Add Rust
+      #   uses: actions-rs/toolchain@v1
+      #   with:
+      #     toolchain: stable
 
-      - uses: Install Cargo Lambda
-        with:
-          command: install
-          args: cargo-lambda
+      # - uses: Install Cargo Lambda
+      #   with:
+      #     command: install
+      #     args: cargo-lambda
 
-      - name: Build
-        id: package
-        working-directory: functions
-        run: build.sh
+      # - name: Build
+      #   id: package
+      #   working-directory: functions
+      #   run: build.sh
 
-      - name: Upload Artifacts
-        working-directory: functions
-        run: upload.sh -b ${{ secrets.BUCKET }} -p ${{ secrets.PREFIX }}
+      # - name: Upload Artifacts
+      #   working-directory: functions
+      #   run: upload.sh -b ${{ secrets.BUCKET }} -p ${{ secrets.PREFIX }}
         
   # deploy:
   #   needs: build
