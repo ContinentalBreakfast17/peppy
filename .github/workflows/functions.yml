@@ -43,10 +43,10 @@ jobs:
         with:
           toolchain: stable
 
-      # - uses: Install Cargo Lambda
-      #   with:
-      #     command: install
-      #     args: cargo-lambda
+      - uses: Install Cargo Lambda
+        with:
+          command: install
+          args: cargo-lambda
 
       # - name: Build
       #   id: package
