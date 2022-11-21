@@ -29,10 +29,10 @@ jobs:
           role-session-name: GitHub-Action-Role
           aws-region: ${{ env.AWS_REGION }}
 
-      # - name: Add Rust
-      #   uses: actions-rs/toolchain@v1
-      #   with:
-      #     toolchain: stable
+      - name: Add Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
 
       # - uses: Install Cargo Lambda
       #   with:
