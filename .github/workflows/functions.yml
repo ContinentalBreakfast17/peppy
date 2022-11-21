@@ -55,11 +55,11 @@ jobs:
 
       - name: Build - Healthcheck
         uses: actions-rs/cargo@v1
-        working-directory: functions/healthcheck
+        # working-directory: functions/healthcheck
         with:
           use-cross: true
           command: build
-          args: --release --target aarch64-unknown-linux-gnu
+          args: --manifest-path functions/healthcheck/Cargo.toml --release --target aarch64-unknown-linux-gnu
         # build --release --target x86_64-unknown-linux-musl
 
       # - name: Build
