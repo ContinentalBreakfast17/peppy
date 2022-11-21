@@ -44,11 +44,7 @@ jobs:
           toolchain: stable
 
       - name: Install Cargo Lambda
-        uses: actions-rs/toolchain@v1
-        with:
-          command: install
-          args: cargo-lambda
-          toolchain: stable
+        run: cargo install cargo-lambda
 
       - name: Build
         working-directory: functions

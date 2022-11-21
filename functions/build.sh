@@ -1,14 +1,11 @@
 #!/bin/bash -e
 
 echo "in build"
-pwd
-ls -la
-find "*.Makefile"
 
 makefiles=()
 while IFS= read -r line; do
     makefiles+=( "$line" )
-done < <( find . -name "*.Makefile" )
+done < <( find . -name "Makefile" -not -path "./_*-pkg/*" )
 
 for makefile in "${makefiles[@]}"
 do
