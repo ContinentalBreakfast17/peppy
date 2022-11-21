@@ -3,8 +3,7 @@
 echo "in build"
 pwd
 ls -la
-find .
-find . -name "*.Makefile"
+find "*.Makefile"
 
 makefiles=()
 while IFS= read -r line; do

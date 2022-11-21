@@ -1,4 +1,4 @@
-name: Build and Upload Function Code
+name: functions
 
 on:
   workflow_dispatch: {}
