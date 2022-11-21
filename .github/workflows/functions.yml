@@ -47,21 +47,20 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
+          target: aarch64-unknown-linux-gnu
+          override: true
 
-      - name: Add Zig
-        uses: supplypike/setup-bin@v1
+      # - name: Install ScCache
+      #   run: cargo install sccache
+
+      - name: Build - Healthcheck
+        uses: actions-rs/cargo@v1
+        working-directory: functions/healthcheck
         with:
-          uri: 'https://ziglang.org/download/0.10.0/zig-linux-x86_64-0.10.0.tar.xz'
-          name: 'zig'
-          version: '0.10.0'
-
-      - name: Install ScCache
-        run: cargo install sccache
-
-      - name: Install Cargo Lambda
-        env:
-          RUSTC_WRAPPER: sccache
-        run: cargo install cargo-lambda
+          use-cross: true
+          command: build
+          args: --release --target aarch64-unknown-linux-gnu
+        # build --release --target x86_64-unknown-linux-musl
 
       # - name: Build
       #   working-directory: functions
@@ -72,26 +71,3 @@ jobs:
       # - name: Upload Artifacts
       #   working-directory: functions
       #   run: upload.sh -b ${{ secrets.BUCKET }} -p ${{ secrets.PREFIX }}
-        
-  # deploy:
-  #   needs: build
-  #   runs-on: ubuntu-latest
-  #   environment: Dev
-  #   permissions:
-  #     id-token: write
-  #     contents: read
-  #   steps:
-  #     - name: Checkout Repository
-  #       uses: actions/checkout@v2
-
-  #     - name: Assume Role
-  #       uses: aws-actions/configure-aws-credentials@v1
-  #       with:
-  #         role-to-assume: ${{ secrets.ROLE }}
-  #         role-session-name: GitHub-Action-Role
-  #         aws-region: ${{ env.AWS_REGION }}
-
-  #     - run: |
-  #         echo "Deploying branch ${{ env.GITHUB_REF }} to ${{ github.event.inputs.environment }}"
-  #         commit_hash=`git rev-parse HEAD`
-  #         aws deploy create-deployment --application-name CodeDeployAppNameWithASG --deployment-group-name CodeDeployGroupName --github-location repository=$GITHUB_REPOSITORY,commitId=$commit_hash --ignore-application-stop-failures
