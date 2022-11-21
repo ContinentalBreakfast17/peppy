@@ -50,9 +50,9 @@ jobs:
           args: cargo-lambda
           toolchain: stable
 
-      # - name: Build
-      #   working-directory: functions
-      #   run: build.sh
+      - name: Build
+        working-directory: functions
+        run: build.sh
 
       # - name: Upload Artifacts
       #   working-directory: functions
