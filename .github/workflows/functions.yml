@@ -52,7 +52,7 @@ jobs:
 
       - name: Build
         working-directory: functions
-        run: build.sh
+        run: ./build.sh
 
       # - name: Upload Artifacts
       #   working-directory: functions
