@@ -1,0 +1,67 @@
+name: Build and Upload Function Code
+
+on:
+  workflow_dispatch: {}
+
+env:
+  AWS_REGION: "us-east-1"
+
+jobs:
+  build:
+    name: Build and Package
+    runs-on: ubuntu-20.04
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Assume Role
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: ${{ secrets.ROLE }}
+          role-session-name: GitHub-Action-Role
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Add Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+
+      - uses: Install Cargo Lambda
+        with:
+          command: install
+          args: cargo-lambda
+
+      - name: Build
+        id: package
+        working-directory: functions
+        run: build.sh
+
+      - name: Upload Artifacts
+        working-directory: functions
+        run: upload.sh -b ${{ secrets.BUCKET }} -p ${{ secrets.PREFIX }}
+        
+  # deploy:
+  #   needs: build
+  #   runs-on: ubuntu-latest
+  #   environment: Dev
+  #   permissions:
+  #     id-token: write
+  #     contents: read
+  #   steps:
+  #     - name: Checkout Repository
+  #       uses: actions/checkout@v2
+
+  #     - name: Assume Role
+  #       uses: aws-actions/configure-aws-credentials@v1
+  #       with:
+  #         role-to-assume: ${{ secrets.ROLE }}
+  #         role-session-name: GitHub-Action-Role
+  #         aws-region: ${{ env.AWS_REGION }}
+
+  #     - run: |
+  #         echo "Deploying branch ${{ env.GITHUB_REF }} to ${{ github.event.inputs.environment }}"
+  #         commit_hash=`git rev-parse HEAD`
+  #         aws deploy create-deployment --application-name CodeDeployAppNameWithASG --deployment-group-name CodeDeployGroupName --github-location repository=$GITHUB_REPOSITORY,commitId=$commit_hash --ignore-application-stop-failures

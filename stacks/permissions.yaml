@@ -10,6 +10,10 @@ Parameters:
     Type: String
     Description: Name to give IAM group for infra admins
     Default: "infra-admins"
+  InfraDeployerRoleName:
+    Type: String
+    Description: Name to give IAM role for Github Actions deployer
+    Default: "infra-deployer"
   InfraAdminPolicyPrefix:
     Type: String
     Description: Prefix for names for IAM policies for infra admins
@@ -19,10 +23,47 @@ Parameters:
     Type: String
   TfStateBucketKey:
     Type: String
+  TfStateArtifactPrefix:
+    Type: String
   TfStateTableArn:
     Type: String
 
+  ThumbprintList:
+    Type: String 
+    Default: "6938fd4d98bab03faadb97b34396831e3780aea1"
+    Description: Github thumprint -- A thumbprint of an Open ID Connector is a SHA1 hash of the public certificate of the host
+  GithubRepoName:
+    Type: String 
+    Description: GitHub repository name some-user/some-repo
+
 Resources:
+  GithubOidcProvider:
+    Type: AWS::IAM::OIDCProvider
+    Properties:
+      Url: "https://token.actions.githubusercontent.com"
+      ClientIdList:
+        - "sts.amazonaws.com"
+      ThumbprintList:
+        - !Ref ThumbprintList
+
+  InfraDeployer:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Ref InfraDeployerRoleName
+      Path: !Sub "/${Prefix}/"
+      ManagedPolicyArns:
+        - !Ref InfraAdminPolicy1
+        - !Ref InfraAdminPolicy2
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Action: sts:AssumeRoleWithWebIdentity
+            Principal:
+              Federated: !Ref GithubOidcProvider
+            Condition:
+              StringLike:
+                token.actions.githubusercontent.com:sub: !Sub "repo:${GithubRepoName}:*"
+
   InfraAdminGroup:
     Type: AWS::IAM::Group
     Properties:
@@ -41,7 +82,7 @@ Resources:
       PolicyDocument:
         Version: "2012-10-17"
         Statement:
-          ## tfstate
+          ## tfstate/build artifacts
           - Effect: Allow
             Action:
               - s3:ListBucket
@@ -50,10 +91,17 @@ Resources:
 
           - Effect: Allow
             Action:
-              - s3:GetObject
-              - s3:PutObject
+              - s3:GetObject*
+              - s3:PutObject*
             Resource:
               - !Sub "${TfStateBucketArn}/${TfStateBucketKey}"
+              - !Sub "${TfStateBucketArn}/${TfStateArtifactPrefix}*"
+
+          - Effect: Allow
+            Action:
+              - s3:DeleteObject*
+            Resource:
+              - !Sub "${TfStateBucketArn}/${TfStateArtifactPrefix}*"
 
           - Effect: Allow
             Action:
