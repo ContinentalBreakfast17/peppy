@@ -1,5 +1,9 @@
 #!/bin/bash -e
 
+echo "in build"
+pwd
+ls -la
+
 makefiles=()
 while IFS= read -r line; do
     makefiles+=( "$line" )
