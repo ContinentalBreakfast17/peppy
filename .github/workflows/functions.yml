@@ -43,11 +43,18 @@ jobs:
         with:
           toolchain: stable
 
+      - name: Install ScCache
+        run: cargo install sccache
+
       - name: Install Cargo Lambda
+        env:
+          RUSTC_WRAPPER: sccache
         run: cargo install cargo-lambda
 
       - name: Build
         working-directory: functions
+        env:
+          RUSTC_WRAPPER: sccache
         run: ./build.sh
 
       # - name: Upload Artifacts
