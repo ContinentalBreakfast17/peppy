@@ -61,12 +61,12 @@ jobs:
       #     version: '0.12.0'
 
       - name: Add Cargo Lambda
-        run: pip install cargo-lambda
-
-      - name: Mic Check
         run: |
+          pip install cargo-lambda
           cargo lambda --version
-          zig version
+
+      # - name: Mic Check
+      #   run: cargo lambda --version
 
       - name: Build - Healthcheck
         working-directory: functions/healthcheck
