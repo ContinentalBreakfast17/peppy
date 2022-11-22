@@ -29,11 +29,11 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             ~/.cache/sccache
-          # target (don't want target/lambda?)
+            functions/healthcheck/target
           # key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          key: ${{ runner.os }}-cargo-test
+          key: ${{ runner.os }}-cargo-${{ hashFiles('functions/healthcheck/Cargo.lock') }}
           restore-keys: |
-            ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+            ${{ runner.os }}-cargo-${{ hashFiles('functions/healthcheck/Cargo.lock') }}
             ${{ runner.os }}-cargo-
 
       - name: Assume Role
