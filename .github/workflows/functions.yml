@@ -36,11 +36,21 @@ jobs:
       #   working-directory: functions/healthcheck
       #   run: make
 
+      - name: Cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            functions/*/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('functions/**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-${{ hashFiles('functions/**/Cargo.lock') }}
+            ${{ runner.os }}-cargo
+
       - name: Build Rust
         strategy:
           matrix:
             function: [healthcheck]
-        uses: .github/workflows/rust-function.yml
-        with:
-          function: ${{ matrix.function }}
-        secrets: inherit
+        working-directory: functions/${{ matrix.function }}
+        run: make
