@@ -37,7 +37,7 @@ jobs:
       #   run: make
 
       - name: Cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             ~/.cargo/registry
@@ -48,9 +48,6 @@ jobs:
             ${{ runner.os }}-cargo-${{ hashFiles('functions/**/Cargo.lock') }}
             ${{ runner.os }}-cargo
 
-      - name: Build Rust
-        strategy:
-          matrix:
-            function: [healthcheck]
-        working-directory: functions/${{ matrix.function }}
-        run: make
+      - name: Build
+        working-directory: functions
+        run: ./build.sh
