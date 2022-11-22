@@ -40,21 +40,12 @@ jobs:
           toolchain: stable
 
       - name: Add Zig
-        uses: giantswarm/install-binary-action@v1.0.0
+        uses: supplypike/setup-bin@v1
         with:
-          binary: "zig"
-          version: "0.10.0"
-          download_url: "https://ziglang.org/download/${version}/zig-linux-x86_64-${version}.tar.xz"
-          tarball_binary_path: "${binary}"
-          smoke_test: "${binary} --version"
-
-      # - name: Add Zig
-      #   uses: supplypike/setup-bin@v1
-      #   with:
-      #     uri: 'https://ziglang.org/download/0.10.0/zig-linux-x86_64-0.10.0.tar.xz'
-      #     name: 'zig'
-      #     version: '0.10.0'
-      #     command: ls
+          uri: 'https://ziglang.org/download/0.10.0/zig-linux-x86_64-0.10.0.tar.xz'
+          name: 'zig'
+          version: '0.10.0'
+          command: ls
 
       - name: Add Cargo Lambda
         uses: supplypike/setup-bin@v1
