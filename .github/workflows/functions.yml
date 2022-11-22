@@ -39,26 +39,29 @@ jobs:
         with:
           toolchain: stable
 
-      - name: Add Zig
-        uses: supplypike/setup-bin@v1
-        with:
-          uri: 'https://ziglang.org/download/0.10.0/zig-linux-x86_64-0.10.0.tar.xz'
-          name: 'zig'
-          version: '0.10.0'
-          command: tar -xvf zig # 'zig-linux-x86_64-0.10.0/zig'
+      # - name: Add Zig
+      #   uses: supplypike/setup-bin@v1
+      #   with:
+      #     uri: 'https://ziglang.org/download/0.10.0/zig-linux-x86_64-0.10.0.tar.xz'
+      #     name: 'zig'
+      #     version: '0.10.0'
+      #     command: tar -xvf zig # zig-linux-x86_64-0.10.0/zig 'zig-linux-x86_64-0.10.0/zig'
 
-      - name: Fix Zig
-        working-directory: /opt/hostedtoolcache/zig/0.10.0/x64
-        run: |
-          mv zig-linux-x86_64-0.10.0/zig zig
-          rm -rf zig-linux-x86_64-0.10.0
+      # - name: Add Zig
+      #   working-directory: /opt/hostedtoolcache/zig/0.10.0/x64
+      #   run: |
+      #     mv zig-linux-x86_64-0.10.0/zig zig
+      #     rm -rf zig-linux-x86_64-0.10.0
+
+      # - name: Add Cargo Lambda
+      #   uses: supplypike/setup-bin@v1
+      #   with:
+      #     uri: 'https://github.com/cargo-lambda/cargo-lambda/releases/download/v0.12.0/cargo-lambda-v0.12.0.x86_64-unknown-linux-musl.tar.gz'
+      #     name: 'cargo-lambda'
+      #     version: '0.12.0'
 
       - name: Add Cargo Lambda
-        uses: supplypike/setup-bin@v1
-        with:
-          uri: 'https://github.com/cargo-lambda/cargo-lambda/releases/download/v0.12.0/cargo-lambda-v0.12.0.x86_64-unknown-linux-musl.tar.gz'
-          name: 'cargo-lambda'
-          version: '0.12.0'
+        run: pip install cargo-lambda
 
       - name: Mic Check
         run: |
