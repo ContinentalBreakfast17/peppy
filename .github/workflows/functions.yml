@@ -28,46 +28,31 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            ~/.cache/sccache
             functions/healthcheck/target
-          # key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           key: ${{ runner.os }}-cargo-${{ hashFiles('functions/healthcheck/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-${{ hashFiles('functions/healthcheck/Cargo.lock') }}
             ${{ runner.os }}-cargo-
 
-      - name: Assume Role
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          role-to-assume: ${{ secrets.ROLE }}
-          role-session-name: GitHub-Action-Role
-          aws-region: ${{ env.AWS_REGION }}
-
       - name: Add Rust
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-          target: aarch64-unknown-linux-gnu
-          override: true
 
-      # - name: Install ScCache
-      #   run: cargo install sccache
+      - name: Add Zig
+        uses: supplypike/setup-bin@v1
+        with:
+          uri: 'https://ziglang.org/download/0.10.0/zig-linux-x86_64-0.10.0.tar.xz'
+          name: 'zig'
+          version: '0.10.0'
+
+      - name: Add Cargo Lambda
+        uses: supplypike/setup-bin@v1
+        with:
+          uri: 'https://github.com/cargo-lambda/cargo-lambda/releases/download/v0.12.0/cargo-lambda-v0.12.0.x86_64-unknown-linux-musl.tar.gz'
+          name: 'cargo-lambda'
+          version: '0.12.0'
 
       - name: Build - Healthcheck
-        uses: actions-rs/cargo@v1
-        # working-directory: functions/healthcheck
-        with:
-          use-cross: true
-          command: build
-          args: --manifest-path functions/healthcheck/Cargo.toml --release --target aarch64-unknown-linux-gnu
-        # build --release --target x86_64-unknown-linux-musl
-
-      # - name: Build
-      #   working-directory: functions
-      #   env:
-      #     RUSTC_WRAPPER: sccache
-      #   run: ./build.sh
-
-      # - name: Upload Artifacts
-      #   working-directory: functions
-      #   run: upload.sh -b ${{ secrets.BUCKET }} -p ${{ secrets.PREFIX }}
+        working-directory: functions/healthcheck
+        run: make
