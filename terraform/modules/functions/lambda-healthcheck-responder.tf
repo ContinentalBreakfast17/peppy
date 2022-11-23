@@ -2,18 +2,24 @@ locals {
   healthcheck_responder_name = "${var.name}-healthcheck-responder"
 }
 
+data "aws_s3_object" "healthcheck_responder" {
+  bucket = local.code_bucket
+  key    = "${var.code.object_prefix}rust/target/lambda/process-healthcheck/bootstrap.zip"
+}
+
 resource "aws_lambda_function" "healthcheck_responder" {
-  function_name    = local.healthcheck_responder_name
-  role             = var.functions.healthcheck_responder.role
-  source_code_hash = var.functions.healthcheck_responder.source_hash
-  filename         = var.functions.healthcheck_responder.source_file
-  description      = "Responds to async healthchecks"
-  handler          = "bootstrap"
-  runtime          = "provided.al2"
-  architectures    = ["arm64"]
-  timeout          = 5
-  memory_size      = 128
-  tags             = local.tags
+  function_name     = local.healthcheck_responder_name
+  role              = var.functions.healthcheck_responder.role
+  s3_bucket         = data.aws_s3_object.healthcheck_responder.bucket
+  s3_key            = data.aws_s3_object.healthcheck_responder.key
+  s3_object_version = data.aws_s3_object.healthcheck_responder.version_id
+  description       = "Responds to async healthchecks"
+  handler           = "bootstrap"
+  runtime           = "provided.al2"
+  architectures     = ["arm64"]
+  timeout           = 5
+  memory_size       = 128
+  tags              = local.tags
 
   environment {
     variables = {

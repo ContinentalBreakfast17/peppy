@@ -37,6 +37,8 @@ if [ -z "$prefix" ]; then
 fi
 if [ $shouldExit -gt 0 ]; then exit 1; fi
 
+# todo: get buckets from stack set (since it's multi-region)
+
 # sync zips
 if [ -z "$deleteFlag" ]; then
     aws s3 sync --exclude '*' --include '*.zip' '.' "s3://$bucket/$prefix"

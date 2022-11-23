@@ -2,18 +2,24 @@ locals {
   ip_lookup_name = "${var.name}-ip-lookup"
 }
 
+data "aws_s3_object" "ip_lookup" {
+  bucket = local.code_bucket
+  key    = "${var.code.object_prefix}rust/target/lambda/ip-lookup/bootstrap.zip"
+}
+
 resource "aws_lambda_function" "ip_lookup" {
-  function_name    = local.ip_lookup_name
-  role             = var.functions.ip_lookup.role
-  source_code_hash = var.functions.ip_lookup.source_hash
-  filename         = var.functions.ip_lookup.source_file
-  description      = "Gets geolocation data from an ip address"
-  handler          = "bootstrap"
-  runtime          = "provided.al2"
-  architectures    = ["arm64"]
-  timeout          = 3
-  memory_size      = 128
-  tags             = local.tags
+  function_name     = local.ip_lookup_name
+  role              = var.functions.ip_lookup.role
+  s3_bucket         = data.aws_s3_object.ip_lookup.bucket
+  s3_key            = data.aws_s3_object.ip_lookup.key
+  s3_object_version = data.aws_s3_object.ip_lookup.version_id
+  description       = "Gets geolocation data from an ip address"
+  handler           = "bootstrap"
+  runtime           = "provided.al2"
+  architectures     = ["arm64"]
+  timeout           = 3
+  memory_size       = 128
+  tags              = local.tags
 
   environment {
     variables = {

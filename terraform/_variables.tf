@@ -19,6 +19,14 @@ variable "send_alarms_to" {
   type        = list(string)
 }
 
+variable "function_code" {
+  description = "Bucket details for where lambda code is stored"
+  type = object({
+    bucket_prefix = string
+    object_prefix = string
+  })
+}
+
 variable "enable_queue_processing" {
   description = "Whether or not to enable matchmaking queue processing"
   type        = bool
