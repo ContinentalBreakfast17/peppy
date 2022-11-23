@@ -1,0 +1,145 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  Deploys resources needed to store artifacts such as terraform state, lambda code, etc.
+Parameters:
+  TableName:
+    Type: String
+  StackSetBucketPrefix:
+    Type: String
+  StackSetRolePrefix:
+    Type: String
+    Default: "slippi-api-artifact-stackset"
+  StackSetName:
+    Type: String
+    Default: "slippi-api-artifacts"
+  Regions:
+    Type: CommaDelimitedList
+    Default: "us-east-1"
+
+Resources:
+  StackSetAdminRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${StackSetRolePrefix}-admin"
+      Policies:
+        - PolicyName: AssumeExecutionRole
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sts:AssumeRole
+                Resource:
+                  - !Sub "arn:aws:iam::${AWS::AccountId}:role/${StackSetRolePrefix}-exec"
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Action: sts:AssumeRole
+            Principal:
+              Service: cloudformation.amazonaws.com
+
+  StackSetExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${StackSetRolePrefix}-exec"
+      Policies:
+        - PolicyName: StackSetRequirements
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              # todo: figure out the scope for this one
+              - Effect: Allow
+                Action:
+                  - sns:*
+                Resource:
+                  - "*"
+              - Effect: Allow
+                Action:
+                  - cloudformation:*
+                Resource:
+                  - !Sub "arn:aws:cloudformation:*:${AWS::AccountId}:stack/StackSet-${StackSetName}-*"
+        - PolicyName: ManageBuckets
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:CreateBucket
+                  - s3:Get*
+                  - s3:Delete*
+                  - s3:Put*
+                Resource:
+                  - !Sub "arn:aws:s3:::${StackSetBucketPrefix}-*"
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Action: sts:AssumeRole
+            Principal:
+              AWS: !GetAtt StackSetAdminRole.RoleId
+
+  StackSet:
+    Type: AWS::CloudFormation::StackSet
+    Properties:
+      StackSetName: !Ref StackSetName
+      Description: Creates buckets in multiple regions for artifact storage (tf state, function code, etc.)
+      PermissionModel: SELF_MANAGED
+      AdministrationRoleARN: !GetAtt StackSetAdminRole.Arn
+      # this apparently cannot use a path........
+      ExecutionRoleName: !Ref StackSetExecutionRole
+      ManagedExecution:
+        Active: true
+      Parameters:
+        - ParameterKey: BucketPrefix
+          ParameterValue: !Ref StackSetBucketPrefix
+      StackInstancesGroup:
+        - DeploymentTargets:
+            Accounts:
+              - !Sub "${AWS::AccountId}"
+          Regions: !Ref Regions
+      OperationPreferences:
+        RegionConcurrencyType: PARALLEL
+      TemplateBody: |
+        AWSTemplateFormatVersion: '2010-09-09'
+        Parameters:
+          BucketPrefix:
+            Type: String
+        Resources:
+          Bucket:
+            Type: AWS::S3::Bucket
+            Properties:
+              BucketName: !Sub "${BucketPrefix}-${AWS::Region}"
+              AccessControl: Private
+              BucketEncryption:
+                ServerSideEncryptionConfiguration:
+                  - ServerSideEncryptionByDefault:
+                      SSEAlgorithm: AES256
+              VersioningConfiguration:
+                Status: Enabled
+              LifecycleConfiguration:
+                Rules:
+                  - Id: MoveOldVersionsToIA
+                    Status: Enabled
+                    NoncurrentVersionTransitions:
+                      - TransitionInDays: 30
+                        StorageClass: STANDARD_IA
+              PublicAccessBlockConfiguration:
+                  BlockPublicAcls: true
+                  BlockPublicPolicy: true
+                  IgnorePublicAcls: true
+                  RestrictPublicBuckets: true
+
+  # terraform lock table
+  Table:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Ref TableName
+      TableClass: STANDARD
+      BillingMode: PAY_PER_REQUEST
+      KeySchema:
+        - AttributeName: LockID
+          KeyType: HASH
+      AttributeDefinitions:
+        - AttributeName: LockID
+          AttributeType: S
+
+# todo: output
