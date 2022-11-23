@@ -72,4 +72,4 @@ jobs:
       - name: Upload
         if: github.event_name == 'workflow_call'
         working-directory: functions
-        script: ./upload.sh -b ${{ secrets.BUCKET }} -p ${{ secrets.PREFIX }} -d
+        run: ./upload.sh -b ${{ secrets.BUCKET }} -p ${{ secrets.PREFIX }} -d
