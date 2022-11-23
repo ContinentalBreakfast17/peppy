@@ -1,0 +1,70 @@
+{
+  "Records": [
+    {
+      "eventID": "abcdefg",
+      "eventName": "MODIFY",
+      "eventVersion": "1.1",
+      "eventSource": "aws:dynamodb",
+      "awsRegion": "us-east-1",
+      "dynamodb": {
+        "ApproximateCreationDateTime": 1664656047,
+        "Keys": {
+          "match": {
+            "S": "aws#521::goku#557"
+          }
+        },
+        "NewImage": {
+          "match": {
+            "S": "aws#521::goku#557"
+          },
+          "players": {
+            "L": [
+              {
+                "M": {
+                  "ip": {
+                    "S": "1.2.3.4"
+                  },
+                  "region": {
+                    "S": "us-east-1"
+                  },
+                  "user": {
+                    "S": "aws#521"
+                  }
+                }
+              },
+              {
+                "M": {
+                  "ip": {
+                    "S": "1.2.3.5"
+                  },
+                  "region": {
+                    "S": "us-east-1"
+                  },
+                  "user": {
+                    "S": "goku#557"
+                  }
+                }
+              }
+            ]
+          },
+          "sessionId": {
+            "S": "2Fa978OZIHAYH8RehY1hf7Ahd5u"
+          },
+          "queue": {
+            "S": "slippi-api-queue-unranked-solo"
+          },
+          "timestamp": {
+            "N": "1664719157"
+          },
+          "ttl": {
+            "N": "1664722757"
+          }
+        },
+        "SequenceNumber": "846600000000096780307802",
+        "SizeBytes": 100000,
+        "StreamViewType": "NEW_AND_OLD_IMAGES"
+      },
+      "eventSourceARN": "arn:aws:dynamodb:us-east-1:123456789123:table/slippi-api-queue-unranked-solo/stream/2022-10-01T14:48:34.824"
+    }
+  ]
+}

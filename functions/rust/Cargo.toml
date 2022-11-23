@@ -1,0 +1,73 @@
+[package]
+name = "peppy-rust"
+version = "0.1.0"
+edition = "2021"
+
+[workspace]
+members = ["pkg/*"]
+
+[[bin]]
+name = "healthcheck"
+path = "src/bin/healthcheck/main.rs"
+
+[[bin]]
+name = "ip-lookup"
+path = "src/bin/ip-lookup/main.rs"
+
+[[bin]]
+name = "process-healthcheck"
+path = "src/bin/process-healthcheck/main.rs"
+
+[[bin]]
+name = "process-match"
+path = "src/bin/process-match/main.rs"
+
+[[bin]]
+name = "process-queue-unranked-solo"
+path = "src/bin/process-queue/unranked-solo.rs"
+
+[package.metadata.lambda.env]
+RUST_LOG = "warn"
+LOCK_REGIONS = "us-east-1,us-east-2"
+LOCK_TABLE = "slippi-api-process-lock"
+
+[package.metadata.lambda.bin.healthcheck.env]
+API_URL = "wss://us-east-1.slippi.yeezyfan.club/graphql"
+TABLE = "slippi-api-healthcheck"
+
+[package.metadata.lambda.bin.ip-lookup.env]
+SECRET_ARN = "slippi-api-ip-lookup-token"
+
+[package.metadata.lambda.bin.process-healthcheck.env]
+API_URL = "https://us-east-1.slippi.yeezyfan.club/graphql"
+
+[package.metadata.lambda.bin.process-match.env]
+API_URL = "https://us-east-1.slippi.yeezyfan.club/graphql"
+
+[package.metadata.lambda.bin.process-queue-unranked-solo.env]
+QUEUE_INDEX = "queue_sort"
+QUEUE_TABLE = "slippi-api-queue-unranked-solo"
+MATCH_TABLE = "slippi-api-matches-unranked-solo"
+
+[dependencies]
+appsync = { path = "pkg/appsync" }
+async-trait = "0.1.57"
+aws-config = "0.49.0"
+aws_lambda_events = { version = "0.7", default-features = false, features = ["cloudwatch_events", "dynamodb"] }
+aws-sdk-dynamodb = "0.19.0"
+aws-sdk-secretsmanager = "0.19.0"
+aws-types = "0.49.0"
+futures = "0.3.24"
+geo = "0.23.0"
+ksuid = "0.2.0"
+lambda_runtime = "0.6.1"
+once_cell = "1.15.0"
+openssl = { version = "0.10.41", features = ["vendored"] }
+petgraph = "0.6.2"
+queue_processor = { path = "pkg/queue-processor" }
+reqwest = { version = "0.11.12", features = ["json"] }
+serde = "1.0.145"
+serde_dynamo = { version = "4", features = ["aws-sdk-dynamodb+0_19", "aws_lambda_events+0_7"] }
+tokio = { version = "1", features = ["full"] }
+tracing = { version = "0.1", features = ["log"] }
+tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt"] }
