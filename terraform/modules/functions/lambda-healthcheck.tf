@@ -2,18 +2,24 @@ locals {
   healthcheck_name = "${var.name}-healthcheck"
 }
 
+data "aws_s3_object" "healthcheck" {
+  bucket = local.code_bucket
+  key    = "${var.code.object_prefix}rust/target/lambda/healthcheck/bootstrap.zip"
+}
+
 resource "aws_lambda_function" "healthcheck" {
-  function_name    = local.healthcheck_name
-  role             = var.functions.healthcheck.role
-  source_code_hash = var.functions.healthcheck.source_hash
-  filename         = var.functions.healthcheck.source_file
-  description      = "Performs a healthcheck on the API"
-  handler          = "bootstrap"
-  runtime          = "provided.al2"
-  architectures    = ["arm64"]
-  timeout          = 20
-  memory_size      = 128
-  tags             = local.tags
+  function_name     = local.healthcheck_name
+  role              = var.functions.healthcheck.role
+  s3_bucket         = data.aws_s3_object.healthcheck.bucket
+  s3_key            = data.aws_s3_object.healthcheck.key
+  s3_object_version = data.aws_s3_object.healthcheck.version_id
+  description       = "Performs a healthcheck on the API"
+  handler           = "bootstrap"
+  runtime           = "provided.al2"
+  architectures     = ["arm64"]
+  timeout           = 20
+  memory_size       = 128
+  tags              = local.tags
 
   environment {
     variables = {

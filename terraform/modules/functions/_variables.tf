@@ -3,35 +3,35 @@ variable "name" {
   type        = string
 }
 
+variable "code" {
+  description = "Bucket details for where lambda code is stored"
+  type = object({
+    bucket_prefix = string
+    object_prefix = string
+  })
+}
+
 variable "functions" {
   description = "Function configuration"
   type = object({
     healthcheck = object({
-      role        = string
-      source_hash = string
-      source_file = string
-      api_url     = string
-      table       = string
+      role    = string
+      api_url = string
+      table   = string
     })
 
     healthcheck_responder = object({
-      role        = string
-      source_hash = string
-      source_file = string
-      api_url     = string
+      role    = string
+      api_url = string
     })
 
     ip_lookup = object({
-      role        = string
-      source_hash = string
-      source_file = string
-      secret_arn  = string
+      role       = string
+      secret_arn = string
     })
 
     queue_processer_unranked_solo = object({
       role         = string
-      source_hash  = string
-      source_file  = string
       match_table  = string
       queue_table  = string
       queue_index  = string
@@ -40,10 +40,8 @@ variable "functions" {
     })
 
     match_publisher = object({
-      role        = string
-      source_hash = string
-      source_file = string
-      api_url     = string
+      role    = string
+      api_url = string
     })
   })
 }

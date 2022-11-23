@@ -2,18 +2,24 @@ locals {
   match_publisher_name = "${var.name}-match-publisher"
 }
 
+data "aws_s3_object" "match_publisher" {
+  bucket = local.code_bucket
+  key    = "${var.code.object_prefix}rust/target/lambda/process-match/bootstrap.zip"
+}
+
 resource "aws_lambda_function" "match_publisher" {
-  function_name    = local.match_publisher_name
-  role             = var.functions.match_publisher.role
-  source_code_hash = var.functions.match_publisher.source_hash
-  filename         = var.functions.match_publisher.source_file
-  description      = "Notifies players of matches"
-  handler          = "bootstrap"
-  runtime          = "provided.al2"
-  architectures    = ["arm64"]
-  timeout          = 15
-  memory_size      = 128
-  tags             = local.tags
+  function_name     = local.match_publisher_name
+  role              = var.functions.match_publisher.role
+  s3_bucket         = data.aws_s3_object.match_publisher.bucket
+  s3_key            = data.aws_s3_object.match_publisher.key
+  s3_object_version = data.aws_s3_object.match_publisher.version_id
+  description       = "Notifies players of matches"
+  handler           = "bootstrap"
+  runtime           = "provided.al2"
+  architectures     = ["arm64"]
+  timeout           = 15
+  memory_size       = 128
+  tags              = local.tags
 
   environment {
     variables = {
