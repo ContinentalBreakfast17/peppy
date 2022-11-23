@@ -1,7 +1,11 @@
 name: functions
 
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
+    environment:
+      description: 'Environment to run plan against'
+      type: environment
+      required: true
   push:
     paths:
       - '.github/workflows/functions.yml'
@@ -11,10 +15,10 @@ env:
   AWS_REGION: "us-east-1"
 
 jobs:
-  build:
-    name: Build and Upload
+  functions:
+    name: Lambda Functions
     runs-on: ubuntu-20.04
-    environment: dev
+    environment: ${{ inputs.environment || 'dev' }}
     permissions:
       id-token: write
       contents: read
@@ -32,10 +36,6 @@ jobs:
           pip install cargo-lambda
           cargo lambda --version
 
-      # - name: Build - Healthcheck
-      #   working-directory: functions/healthcheck
-      #   run: make
-
       - name: Cache
         uses: actions/cache@v3
         with:
@@ -43,6 +43,7 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             functions/*/target
+            !functions/*/target/lambda
           key: ${{ runner.os }}-cargo-${{ hashFiles('functions/**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-${{ hashFiles('functions/**/Cargo.lock') }}
@@ -51,3 +52,24 @@ jobs:
       - name: Build
         working-directory: functions
         run: ./build.sh
+
+      - name: Archive Binaries
+        uses: actions/upload-artifact@v3
+        with:
+          name: lambda-zips
+          retention-days: 1
+          path: |
+            functions/*/target/lambda/**.zip
+
+      - name: Assume Role
+        uses: aws-actions/configure-aws-credentials@v1
+        if: github.event_name == 'workflow_call'
+        with:
+          role-to-assume: ${{ secrets.ROLE }}
+          role-session-name: GitHub-Action-Role
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Upload
+        if: github.event_name == 'workflow_call'
+        working-directory: functions
+        script: ./upload.sh -b ${{ secrets.BUCKET }} -p ${{ secrets.PREFIX }} -d

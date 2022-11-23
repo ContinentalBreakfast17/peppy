@@ -1,0 +1,70 @@
+name: terraform
+
+on:
+  workflow_dispatch:
+    environment:
+      description: 'Environment to run plan against'
+      type: environment
+      required: true
+  push:
+    paths:
+      - '.github/workflows/terraform.yml'
+      - 'terraform/**'
+      - 'vtl/**'
+      - 'schema/**'
+
+env:
+  AWS_REGION: "us-east-1"
+
+jobs:
+  terraform:
+    name: Terraform
+    runs-on: ubuntu-20.04
+    environment:
+      name: ${{ inputs.environment || 'dev' }}
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Add Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.3.0
+
+      - name: Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            terraform/.terraform/providers
+          key: ${{ runner.os }}-tf-${{ hashFiles('terraform/.terraform.lock.hcl') }}
+
+      - name: Assume Role
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: ${{ secrets.ROLE }}
+          role-session-name: GitHub-Action-Role
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Init
+        working-directory: terraform
+        run: terraform init --backend-config config/${{ secrets.CONFIG_DIR }}/backend.tfvars
+
+      - name: Plan
+        working-directory: terraform
+        run: terraform plan -no-color -var-file config/${{ secrets.CONFIG_DIR }}/vars.tfvars -out tf.plan
+
+      - name: Archive Plan
+        uses: actions/upload-artifact@v3
+        with:
+          name: tf-plan
+          retention-days: 1
+          path: |
+            terraform/tf.plan
+
+      - name: Apply
+        if: github.event_name == 'workflow_call'
+        working-directory: terraform
+        script: terraform apply -no-color -auto-approve tf.plan
