@@ -59,8 +59,7 @@ jobs:
 
       - name: Debug
         run: |
-          sccache --help
-          which sccache
+          ls /opt/hostedtoolcache/sccache/0.3.1/x64
 
       - name: Build
         working-directory: functions
