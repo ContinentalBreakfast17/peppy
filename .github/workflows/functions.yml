@@ -59,13 +59,13 @@ jobs:
 
       - name: Debug
         run: |
-          ls /opt/hostedtoolcache/sccache/0.3.1/x64/sccache-dist-v0.3.1-x86_64-unknown-linux-musl
+          ls /opt/hostedtoolcache/sccache/0.3.1/x64/sccache-dist-v0.3.1-x86_64-unknown-linux-musl/sccache-dist
 
       - name: Build
         working-directory: functions
         run: ./build.sh
         env:
-          RUSTC_WRAPPER: /opt/hostedtoolcache/sccache/0.3.1/x64/sccache-dist-v0.3.1-x86_64-unknown-linux-musl/sccache
+          RUSTC_WRAPPER: /opt/hostedtoolcache/sccache/0.3.1/x64/sccache-dist-v0.3.1-x86_64-unknown-linux-musl/sccache-dist/sccache
 
       - name: Archive Binaries
         uses: actions/upload-artifact@v3
