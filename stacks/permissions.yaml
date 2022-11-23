@@ -326,6 +326,7 @@ Resources:
               - secretsmanager:DeleteResourcePolicy
               - secretsmanager:DescribeSecret
               - secretsmanager:GetResourcePolicy
+              - secretsmanager:GetSecretValue
               - secretsmanager:PutResourcePolicy
               - secretsmanager:RemoveRegionsFromReplication
               - secretsmanager:ReplicateSecretToRegions
