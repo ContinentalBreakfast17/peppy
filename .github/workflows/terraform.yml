@@ -67,4 +67,4 @@ jobs:
       - name: Apply
         if: github.event_name == 'workflow_call'
         working-directory: terraform
-        script: terraform apply -no-color -auto-approve tf.plan
+        run: terraform apply -no-color -auto-approve tf.plan
