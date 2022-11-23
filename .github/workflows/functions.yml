@@ -36,12 +36,21 @@ jobs:
           pip install cargo-lambda
           cargo lambda --version
 
+      - name: Add ScCache
+        uses: supplypike/setup-bin@v1
+        with:
+          uri: 'https://github.com/mozilla/sccache/releases/download/v0.3.1/sccache-dist-v0.3.1-x86_64-unknown-linux-musl.tar.gz'
+          name: 'sccache'
+          version: '0.3.1'
+          command: pwd
+
       - name: Cache
         uses: actions/cache@v3
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
+            ~/.cache/sccache
             functions/*/target
             !functions/*/target/lambda
           key: ${{ runner.os }}-cargo-${{ hashFiles('functions/**/Cargo.lock') }}
@@ -52,6 +61,8 @@ jobs:
       - name: Build
         working-directory: functions
         run: ./build.sh
+        env:
+          RUSTC_WRAPPER: /path/to/sccache
 
       - name: Archive Binaries
         uses: actions/upload-artifact@v3
