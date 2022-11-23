@@ -1,5 +1,5 @@
 build:
-	@cargo lambda build --release --arm64
+	@cargo lambda build --release --arm64 --output-format zip
 
 run:
 	@cargo lambda start
