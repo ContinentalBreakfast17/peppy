@@ -2,11 +2,11 @@
 
 # parse args
 deleteFlag=""
-while getopts "b:p:d" opt; do
+while getopts "s:p:d" opt; do
     case $opt in
-        b)
-            bucket="$OPTARG"
-            echo "Using bucket $bucket"
+        s)
+            stack="$OPTARG"
+            echo "Using stack $stack"
             ;;
         p)
             prefix="$OPTARG"
@@ -27,21 +27,40 @@ done
 
 # ensure args exist
 shouldExit=0
-if [ -z "$bucket" ]; then
-    echo 'Missing -b (name of bucket to upload code to)'
+if [ -z "$stack" ]; then
+    echo 'Missing -s (name of stack containing relevant artifact parameters)'
     shouldExit=1
 fi
 if [ -z "$prefix" ]; then
-    echo 'Missing -p (prefix key of bucket to upload code to)'
+    echo 'Missing -p (object prefix key to upload code to)'
     shouldExit=1
 fi
 if [ $shouldExit -gt 0 ]; then exit 1; fi
 
-# todo: get buckets from stack set (since it's multi-region)
+# get buckets/regions from stack set
+params=$(aws cloudformation describe-stacks --stack-name "$stack" | jq -r '.Stacks[0].Parameters')
+regions=()
+bucket_prefix=""
+for row in $(echo "${params}" | jq -r '.[] | @base64'); do
+    _jq() {
+        echo ${row} | base64 --decode | jq -r ${1}
+    }
+
+    if [ "$(_jq '.ParameterKey')" = "StackSetBucketPrefix" ]; then
+        bucket_prefix="$(_jq '.ParameterValue')"
+    elif [ "$(_jq '.ParameterKey')" = "Regions" ]; then
+        IFS=',' read -ra regions <<< "$(_jq '.ParameterValue')"
+    fi
+done
 
 # sync zips
-if [ -z "$deleteFlag" ]; then
-    aws s3 sync --exclude '*' --include '*.zip' '.' "s3://$bucket/$prefix"
-else
-    aws s3 sync --exclude '*' --include '*.zip' --delete '.' "s3://$bucket/$prefix"
-fi
+for region in "${regions[@]}"; do
+    bucket="${bucket_prefix}-${region}"
+    echo "Uploading to $bucket"
+
+    if [ -z "$deleteFlag" ]; then
+        aws s3 sync --exclude '*' --include '*.zip' '.' "s3://$bucket/$prefix"
+    else
+        aws s3 sync --exclude '*' --include '*.zip' --delete '.' "s3://$bucket/$prefix"
+    fi
+done
