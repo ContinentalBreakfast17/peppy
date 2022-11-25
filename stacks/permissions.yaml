@@ -19,6 +19,8 @@ Parameters:
     Description: Prefix for names for IAM policies for infra admins
     Default: "infra-admin"
 
+  ArtifactStackName:
+    Type: String
   TfStateBucketArn:
     Type: String
   TfStateBucketKey:
@@ -102,6 +104,12 @@ Resources:
               - s3:DeleteObject*
             Resource:
               - !Sub "${TfStateBucketArn}/${TfStateArtifactPrefix}*"
+
+          - Effect: Allow
+            Action:
+              - cloudformation:DescribeStacks
+            Resource:
+              - !Sub "arn:aws:cloudformation:*:${AWS::AccountId}:stack/${ArtifactStackName}/*"
 
           - Effect: Allow
             Action:

@@ -47,7 +47,7 @@ Resources:
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
-              # todo: figure out the scope for this one
+              # todo: figure out the scope for this one (we can probably just add a "not my account" condition)
               - Effect: Allow
                 Action:
                   - sns:*
