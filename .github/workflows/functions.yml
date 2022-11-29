@@ -24,7 +24,7 @@ jobs:
   functions:
     name: Lambda Functions
     runs-on: ubuntu-20.04
-    environment: ${{ inputs.environment || 'dev' }}
+    environment: ${{ github.event.inputs.environment || 'dev' }}
     permissions:
       id-token: write
       contents: read
@@ -70,13 +70,13 @@ jobs:
 
       - name: Assume Role
         uses: aws-actions/configure-aws-credentials@v1
-        if: github.event_name == 'workflow_call' || inputs.deploy == 'true'
+        if: github.event_name == 'workflow_call' || format('{0}', github.event.inputs.deploy) == 'true'
         with:
           role-to-assume: ${{ secrets.ROLE }}
           role-session-name: GitHub-Action-Role
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Upload
-        if: github.event_name == 'workflow_call' || inputs.deploy == 'true'
+        if: github.event_name == 'workflow_call' || format('{0}', github.event.inputs.deploy) == 'true'
         working-directory: functions
         run: ./upload.sh -s ${{ secrets.ARTIFACTS_STACK }} -p ${{ secrets.PREFIX }} -d
