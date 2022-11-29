@@ -2,10 +2,11 @@ name: functions
 
 on:
   workflow_dispatch:
-    environment:
-      description: 'Environment to run plan against'
-      type: environment
-      required: true
+    inputs:
+      environment:
+        description: 'Environment to run plan against'
+        type: environment
+        required: true
   push:
     paths:
       - '.github/workflows/functions.yml'
@@ -73,4 +74,4 @@ jobs:
       - name: Upload
         if: github.event_name == 'workflow_call'
         working-directory: functions
-        run: ./upload.sh -b ${{ secrets.BUCKET }} -p ${{ secrets.PREFIX }} -d
+        run: ./upload.sh -s ${{ secrets.ARTIFACTS_STACK }} -p ${{ secrets.PREFIX }} -d
