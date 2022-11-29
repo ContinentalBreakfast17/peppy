@@ -7,6 +7,11 @@ on:
         description: 'Environment to run plan against'
         type: environment
         required: true
+      deploy:
+        description: Whether to apply terraform
+        type: boolean
+        required: false
+        default: false
   push:
     paths:
       - '.github/workflows/terraform.yml'
@@ -66,6 +71,6 @@ jobs:
             terraform/tf.plan
 
       - name: Apply
-        if: github.event_name == 'workflow_call'
+        if: github.event_name == 'workflow_call' || inputs.deploy == 'true'
         working-directory: terraform
         run: terraform apply -no-color -auto-approve tf.plan
