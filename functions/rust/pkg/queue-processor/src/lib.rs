@@ -81,7 +81,7 @@ async fn run_wrapper<QueueItem: serde::de::DeserializeOwned + serde::Serialize +
 async fn run<QueueItem: serde::de::DeserializeOwned + serde::Serialize + Identifiable>(p: &dyn Processor<QueueItem>, execution_id: ksuid::Ksuid) -> Result<(), Error> {
     let client = p.client();
 
-     // first, check if the region is reasonably healthy
+    // first, check if the region is reasonably healthy
     // if it is not, make no attempt to process the stream (assuming stream will be processed by other regions)
     let lock_region_index = match client.check_health(execution_id).await {
         Ok((healthy, index)) => {
