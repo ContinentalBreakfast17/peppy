@@ -8,7 +8,7 @@ on:
         type: environment
         required: true
       deploy:
-        description: Whether to apply terraform
+        description: Apply terraform
         type: boolean
         required: false
         default: false
