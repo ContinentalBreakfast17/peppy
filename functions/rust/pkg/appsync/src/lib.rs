@@ -110,7 +110,6 @@ impl Client {
         let encoded_connect_header = base64::encode_config(json!(connect_headers).to_string().as_bytes(), base64::URL_SAFE);
         let request = http::Request::builder()
             .method("GET")
-            //.uri(format!("{}?header={}&payload=e30=", self.api.as_str(), header))
             .uri(format!("wss://{}/graphql/realtime?header={}&payload=e30=", self.host, encoded_connect_header))
             .header("Host", self.host.clone())
             .header("Upgrade", "websocket")

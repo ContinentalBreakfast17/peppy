@@ -50,7 +50,6 @@ jobs:
             ~/.cargo/git
             functions/rust/target
             !functions/rust/target/lambda
-            !functions/rust/target/debug
           key: ${{ runner.os }}-cargo-${{ hashFiles('functions/**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-${{ hashFiles('functions/**/Cargo.lock') }}
