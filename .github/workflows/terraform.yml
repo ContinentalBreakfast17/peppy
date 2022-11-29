@@ -27,7 +27,7 @@ jobs:
     name: Terraform
     runs-on: ubuntu-20.04
     environment:
-      name: ${{ inputs.environment || 'dev' }}
+      name: ${{ github.event.inputs.environment || 'dev' }}
     permissions:
       id-token: write
       contents: read
@@ -71,6 +71,6 @@ jobs:
             terraform/tf.plan
 
       - name: Apply
-        if: github.event_name == 'workflow_call' || inputs.deploy == 'true'
+        if: github.event_name == 'workflow_call' || format('{0}', github.event.inputs.deploy) == 'true'
         working-directory: terraform
         run: terraform apply -no-color -auto-approve tf.plan
