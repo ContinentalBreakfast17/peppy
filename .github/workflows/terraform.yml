@@ -2,10 +2,11 @@ name: terraform
 
 on:
   workflow_dispatch:
-    environment:
-      description: 'Environment to run plan against'
-      type: environment
-      required: true
+    inputs:
+      environment:
+        description: 'Environment to run plan against'
+        type: environment
+        required: true
   push:
     paths:
       - '.github/workflows/terraform.yml'
