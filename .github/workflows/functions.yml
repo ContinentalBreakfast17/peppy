@@ -4,9 +4,14 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Environment to run plan against'
+        description: Environment to run upload against (ignored if deploy is false)
         type: environment
         required: true
+      deploy:
+        description: Whether to upload the function code
+        type: boolean
+        required: false
+        default: false
   push:
     paths:
       - '.github/workflows/functions.yml'
@@ -65,13 +70,13 @@ jobs:
 
       - name: Assume Role
         uses: aws-actions/configure-aws-credentials@v1
-        if: github.event_name == 'workflow_call'
+        if: github.event_name == 'workflow_call' || inputs.deploy == 'true'
         with:
           role-to-assume: ${{ secrets.ROLE }}
           role-session-name: GitHub-Action-Role
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Upload
-        if: github.event_name == 'workflow_call'
+        if: github.event_name == 'workflow_call' || inputs.deploy == 'true'
         working-directory: functions
         run: ./upload.sh -s ${{ secrets.ARTIFACTS_STACK }} -p ${{ secrets.PREFIX }} -d
