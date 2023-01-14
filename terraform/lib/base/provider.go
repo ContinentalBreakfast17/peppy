@@ -1,9 +1,9 @@
-package provider
+package base
 
 import (
+	"github.com/ContinentalBreakfast17/peppy/terraform/lib/_common"
 	"github.com/aws/jsii-runtime-go"
 	. "github.com/cdktf/cdktf-provider-aws-go/aws/v10/provider"
-	"github.com/ContinentalBreakfast17/peppy/terraform/lib/_common"
 )
 
 type providers struct {
@@ -11,15 +11,15 @@ type providers struct {
 	Copies map[string]AwsProvider
 }
 
-type ProviderConfig struct {
-	Regions []string
-	Tags    *map[string]*string
+type providerConfig struct {
+	regions []string
+	tags    *map[string]*string
 }
 
-func (cfg ProviderConfig) NewProviders(ctx common.TfContext) providers {
-	if cfg.Tags == nil || *cfg.Tags == nil {
+func (cfg providerConfig) new(ctx common.TfContext) providers {
+	if cfg.tags == nil || *cfg.tags == nil {
 		m := map[string]*string{}
-		cfg.Tags = &m
+		cfg.tags = &m
 	}
 
 	// we _need_ us-east-1
@@ -27,18 +27,18 @@ func (cfg ProviderConfig) NewProviders(ctx common.TfContext) providers {
 	main := NewAwsProvider(ctx.Scope, jsii.String(ctx.Id+"_"+region), &AwsProviderConfig{
 		Region: jsii.String(region),
 		DefaultTags: &AwsProviderDefaultTags{
-			Tags: cfg.tags(region),
+			Tags: cfg.getTags(region),
 		},
 	})
 
 	// additional regions to deploy to for HA
 	copies := map[string]AwsProvider{}
-	for _, region := range cfg.Regions {
+	for _, region := range cfg.regions {
 		copies[region] = NewAwsProvider(ctx.Scope, jsii.String(ctx.Id+"_"+region), &AwsProviderConfig{
 			Region: jsii.String(region),
 			Alias:  jsii.String(region),
 			DefaultTags: &AwsProviderDefaultTags{
-				Tags: cfg.tags(region),
+				Tags: cfg.getTags(region),
 			},
 		})
 	}
@@ -46,9 +46,9 @@ func (cfg ProviderConfig) NewProviders(ctx common.TfContext) providers {
 	return providers{main, copies}
 }
 
-func (cfg ProviderConfig) tags(region string) *map[string]*string {
+func (cfg providerConfig) getTags(region string) *map[string]*string {
 	m := map[string]*string{"region": jsii.String(region)}
-	for key, val := range *cfg.Tags {
+	for key, val := range *cfg.tags {
 		m[key] = val
 	}
 	return &m

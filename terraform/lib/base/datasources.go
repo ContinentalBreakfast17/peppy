@@ -1,4 +1,4 @@
-package data
+package base
 
 import (
 	"github.com/ContinentalBreakfast17/peppy/terraform/lib/_common"
@@ -12,18 +12,18 @@ type dataSources struct {
 	Admins DataAwsIamGroup
 }
 
-type DataSourceConfig struct {
-	AdminGroupName *string
+type dataSourceConfig struct {
+	adminGroupName *string
 }
 
-func (cfg DataSourceConfig) NewDataSources(ctx common.TfContext) dataSources {
+func (cfg dataSourceConfig) new(ctx common.TfContext) dataSources {
 	caller := NewDataAwsCallerIdentity(ctx.Scope, jsii.String(ctx.Id), &DataAwsCallerIdentityConfig{
 		Provider: ctx.Provider,
 	})
 
 	admins := NewDataAwsIamGroup(ctx.Scope, jsii.String(ctx.Id+"_admin_group"), &DataAwsIamGroupConfig{
 		Provider:  ctx.Provider,
-		GroupName: cfg.AdminGroupName,
+		GroupName: cfg.adminGroupName,
 	})
 	return dataSources{caller, admins}
 }
