@@ -50,7 +50,7 @@ func (cfg keyConfig) new(ctx common.TfContext) keySet {
 
 	primaryAlias := NewKmsAlias(ctx.Scope, jsii.String(ctx.Id+"_alias"), &KmsAliasConfig{
 		Provider:    ctx.Provider,
-		TargetKeyId: primary.GetStringAttribute(jsii.String("key_id")),
+		TargetKeyId: primary.KeyId(),
 		Name:        jsii.String("alias/" + *cfg.name),
 	})
 
@@ -66,7 +66,7 @@ func (cfg keyConfig) new(ctx common.TfContext) keySet {
 func (key primaryKey) replica(ctx common.TfContext) replicaKey {
 	replica := NewKmsReplicaKey(ctx.Scope, jsii.String(ctx.Id), &KmsReplicaKeyConfig{
 		Provider:             ctx.Provider,
-		PrimaryKeyArn:        key.Key.GetStringAttribute(jsii.String("arn")),
+		PrimaryKeyArn:        key.Key.Arn(),
 		Description:          key.Key.Description(),
 		DeletionWindowInDays: jsii.Number(7),
 		Enabled:              jsii.Bool(true),
@@ -75,7 +75,7 @@ func (key primaryKey) replica(ctx common.TfContext) replicaKey {
 
 	alias := NewKmsAlias(ctx.Scope, jsii.String(ctx.Id+"_alias"), &KmsAliasConfig{
 		Provider:    ctx.Provider,
-		TargetKeyId: replica.GetStringAttribute(jsii.String("key_id")),
+		TargetKeyId: replica.KeyId(),
 		Name:        key.Alias.Name(),
 	})
 	return replicaKey{replica, alias}
