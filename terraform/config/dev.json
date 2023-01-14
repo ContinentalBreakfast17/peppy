@@ -1,0 +1,25 @@
+{
+	"name": "slippi-api",
+	"iamPath": "/slippi-api/",
+	"regions": ["us-west-1"],
+	"backend": {
+		"bucket": "slippi-api-artifacts-18968913554-us-east-1",
+		"key": "slippi/terraform/api.json",
+		"region": "us-east-1",
+		"table": "tf-state"
+	},
+	"artifacts": {
+		"bucketPrefix": "slippi-api-artifacts-18968913554",
+		"objectPrefix": "slippi/functions"
+	},
+	"domain": {
+		"name": "yeezyfan.club"
+	},
+	"alarms": {
+		"enabled": true,
+		"sendTo": ["hunterrhollant@gmail.com"]
+	},
+	"groups": {
+		"infraAdmin": "infra-admins"
+	}
+}
