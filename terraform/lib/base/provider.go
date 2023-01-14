@@ -14,6 +14,7 @@ type providers struct {
 type providerConfig struct {
 	regions []string
 	tags    *map[string]*string
+	name    *string
 }
 
 func (cfg providerConfig) new(ctx common.TfContext) providers {
@@ -47,7 +48,7 @@ func (cfg providerConfig) new(ctx common.TfContext) providers {
 }
 
 func (cfg providerConfig) getTags(region string) *map[string]*string {
-	m := map[string]*string{"region": jsii.String(region)}
+	m := map[string]*string{"region": jsii.String(region), "app": cfg.name}
 	for key, val := range *cfg.tags {
 		m[key] = val
 	}

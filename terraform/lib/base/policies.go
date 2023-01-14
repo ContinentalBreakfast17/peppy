@@ -34,7 +34,7 @@ type kmsPoliciesConfig struct {
 func (cfg policyConfig) new(ctx common.TfContext) policies {
 	kmsMain := kmsPoliciesConfig{
 		keySet: cfg.kmsMain,
-		name:   *cfg.name + "kms-main",
+		name:   *cfg.name + "-kms-main",
 		path:   cfg.path,
 	}.new(common.SimpleContext(ctx.Scope, ctx.Id+"_kms_main", ctx.Provider))
 
