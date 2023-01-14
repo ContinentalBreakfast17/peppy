@@ -1,6 +1,7 @@
 package match_publish
 
 import (
+	"encoding/json"
 	"strings"
 
 	"github.com/ContinentalBreakfast17/peppy/terraform/lib/_common"
@@ -13,6 +14,7 @@ import (
 	. "github.com/cdktf/cdktf-provider-aws-go/aws/v10/iamrole"
 	. "github.com/cdktf/cdktf-provider-aws-go/aws/v10/iamrolepolicy"
 	. "github.com/cdktf/cdktf-provider-aws-go/aws/v10/iamrolepolicyattachment"
+	. "github.com/cdktf/cdktf-provider-aws-go/aws/v10/lambdaeventsourcemapping"
 	. "github.com/cdktf/cdktf-provider-aws-go/aws/v10/lambdafunction"
 	"github.com/hashicorp/terraform-cdk-go/cdktf"
 )
@@ -210,6 +212,29 @@ func (cfg instanceConfig) new(ctx common.TfContext) matchPublishInstance {
 		DependsOn:       &lambdaDependsOn,
 		Environment: &LambdaFunctionEnvironment{
 			Variables: &lambdaEnv,
+		},
+	})
+
+	filter := map[string]any{
+		"eventName": []string{"MODIFY", "INSERT"},
+	}
+	filterBytes, _ := json.Marshal(filter)
+
+	NewLambdaEventSourceMapping(ctx.Scope, jsii.String(ctx.Id+"_stream"), &LambdaEventSourceMappingConfig{
+		Provider:                       ctx.Provider,
+		FunctionName:                   lambda.FunctionName(),
+		Enabled:                        jsii.Bool(true),
+		EventSourceArn:                 table.StreamArn(),
+		StartingPosition:               jsii.String("LATEST"),
+		MaximumBatchingWindowInSeconds: jsii.Number(2),
+		MaximumRetryAttempts:           jsii.Number(6),
+		FilterCriteria: &LambdaEventSourceMappingFilterCriteria{
+			Filter: &[]LambdaEventSourceMappingFilterCriteriaFilter{
+				{
+					// todo: enforce region match?
+					Pattern: jsii.String(string(filterBytes)),
+				},
+			},
 		},
 	})
 
