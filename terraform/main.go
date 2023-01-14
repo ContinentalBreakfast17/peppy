@@ -2,54 +2,65 @@ package main
 
 import (
 	. "github.com/ContinentalBreakfast17/peppy/terraform/lib/_common"
+	"github.com/ContinentalBreakfast17/peppy/terraform/lib/_config"
 	. "github.com/ContinentalBreakfast17/peppy/terraform/lib/base"
 	. "github.com/ContinentalBreakfast17/peppy/terraform/lib/ip-lookup"
 	"github.com/aws/jsii-runtime-go"
 	"github.com/hashicorp/terraform-cdk-go/cdktf"
 )
 
-func main() {
-	app := cdktf.NewApp(nil)
-	stack := cdktf.NewTerraformStack(app, jsii.String("aws"))
+type stackConfig config.Stack
 
-	// todo: parse vars
-	name := jsii.String("slippi-api")
-	codeObjectConfig := ObjectConfig{
-		Bucket: jsii.String("slippi-api-artifacts-18968913554"),
-		Prefix: jsii.String("slippi/functions"),
+func main() {
+	// read config
+	stacks, err := config.LoadStacks("config")
+	if err != nil {
+		panic(err)
 	}
-	iamPath := jsii.String("/slippi-api/")
+
+	app := cdktf.NewApp(nil)
+	for _, stack := range stacks {
+		(stackConfig(stack)).addTo(app)
+	}
+
+	app.Synth()
+}
+
+func (cfg stackConfig) addTo(app cdktf.App) {
+	stack := cdktf.NewTerraformStack(app, jsii.String(cfg.StackName))
 
 	cdktf.NewS3Backend(stack, &cdktf.S3BackendProps{
-		// todo: move to vars
-		Bucket:        jsii.String("slippi-api-artifacts-18968913554-us-east-1"),
-		Key:           jsii.String("slippi/terraform/api.json"),
-		Region:        jsii.String("us-east-1"),
-		DynamodbTable: jsii.String("tf-state"),
+		Bucket:        jsii.String(cfg.Vars.Backend.Bucket),
+		Key:           jsii.String(cfg.Vars.Backend.Key),
+		Region:        jsii.String(cfg.Vars.Backend.Region),
+		DynamodbTable: jsii.String(cfg.Vars.Backend.Table),
 	})
 
+	codeObjectConfig := ObjectConfig{
+		Bucket: jsii.String(cfg.Vars.Artifacts.BucketPrefix),
+		Prefix: jsii.String(cfg.Vars.Artifacts.ObjectPrefix),
+	}
+
 	base := BaseConfig{
-		Name:           name,
-		IamPath:        iamPath,
-		Regions:        []string{"us-west-1"},
-		AdminGroupName: jsii.String("infra-admins"),
+		Name:           jsii.String(cfg.Vars.Name),
+		IamPath:        jsii.String(cfg.Vars.IamPath),
+		Regions:        cfg.Vars.Regions,
+		AdminGroupName: jsii.String(cfg.Vars.Groups.InfraAdmin),
 	}.New(SimpleContext(stack, "base", nil))
 
 	allProviders := base.Providers.All()
 	lambdaIam := LambdaIamConfig{
-		Path:       iamPath,
+		Path:       jsii.String(cfg.Vars.IamPath),
 		ExecPolicy: base.Policies.LambdaExec.Arn(),
 		AssumeRole: base.Policies.LambdaAssumeRole.Json(),
 	}
 
 	IpLookupConfig{
 		Providers:     allProviders,
-		Name:          jsii.String(*name + "-ip-lookup"),
+		Name:          jsii.String(cfg.Vars.Name + "-ip-lookup"),
 		LambdaIam:     lambdaIam,
 		KmsReadPolicy: base.Policies.KmsMain.Read.Arn(),
 		KmsArns:       base.KmsMain.Arns(),
 		Code:          codeObjectConfig,
 	}.New(SimpleContext(stack, "ip_lookup", base.Providers.Main))
-
-	app.Synth()
 }
