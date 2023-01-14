@@ -13,7 +13,8 @@
 		"objectPrefix": "slippi/functions"
 	},
 	"domain": {
-		"name": "yeezyfan.club"
+		"name": "yeezyfan.club",
+		"subdomain": "slippi"
 	},
 	"alarms": {
 		"enabled": true,

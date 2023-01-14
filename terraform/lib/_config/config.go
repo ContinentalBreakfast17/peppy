@@ -16,7 +16,7 @@ type Stack struct {
 type StackVars struct {
 	Name      string        `json:"name"`
 	IamPath   string        `json:"iamPath"`
-	Regions   []string      `json:"region"`
+	Regions   []string      `json:"regions"`
 	Backend   VarsBackend   `json:"backend"`
 	Artifacts VarsArtifacts `json:"artifacts"`
 	Domain    VarsDomain    `json:"domain"`
@@ -37,7 +37,8 @@ type VarsArtifacts struct {
 }
 
 type VarsDomain struct {
-	Name string `json:"name"`
+	Name      string `json:"name"`
+	Subdomain string `json:"subdomain"`
 }
 
 type VarsAlarms struct {
@@ -76,4 +77,20 @@ func LoadStacks(path string) ([]Stack, error) {
 	}
 
 	return stacks, nil
+}
+
+// this is important as lock tables need to be processed in order
+func (cfg StackVars) OrderedRegions() []string {
+	return append([]string{"us-east-1"}, cfg.Regions...)
+}
+
+func (domain VarsDomain) RegionalUrlTemplate() string {
+	return fmt.Sprintf("https://<region>.%s/graphl", domain.Fqdn())
+}
+
+func (domain VarsDomain) Fqdn() string {
+	if domain.Subdomain != "" {
+		return fmt.Sprintf("%s.%s", domain.Subdomain, domain.Name)
+	}
+	return domain.Name
 }

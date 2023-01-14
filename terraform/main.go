@@ -5,6 +5,9 @@ import (
 	"github.com/ContinentalBreakfast17/peppy/terraform/lib/_config"
 	. "github.com/ContinentalBreakfast17/peppy/terraform/lib/base"
 	. "github.com/ContinentalBreakfast17/peppy/terraform/lib/ip-lookup"
+	. "github.com/ContinentalBreakfast17/peppy/terraform/lib/lock-table"
+	. "github.com/ContinentalBreakfast17/peppy/terraform/lib/match-make"
+	. "github.com/ContinentalBreakfast17/peppy/terraform/lib/match-publish"
 	"github.com/aws/jsii-runtime-go"
 	"github.com/hashicorp/terraform-cdk-go/cdktf"
 )
@@ -59,8 +62,36 @@ func (cfg stackConfig) addTo(app cdktf.App) {
 		Providers:     allProviders,
 		Name:          jsii.String(cfg.Vars.Name + "-ip-lookup"),
 		LambdaIam:     lambdaIam,
+		Code:          codeObjectConfig,
 		KmsReadPolicy: base.Policies.KmsMain.Read.Arn(),
 		KmsArns:       base.KmsMain.Arns(),
-		Code:          codeObjectConfig,
 	}.New(SimpleContext(stack, "ip_lookup", base.Providers.Main))
+
+	lockTable := LockTableConfig{
+		Providers: allProviders,
+		Name:      jsii.String(cfg.Vars.Name + "-process-lock"),
+		KmsArns:   base.KmsMain.Arns(),
+	}.New(SimpleContext(stack, "process_lock", base.Providers.Main))
+
+	matchPublish := MatchPublishConfig{
+		Providers:     allProviders,
+		Name:          jsii.String(cfg.Vars.Name + "-match-publish"),
+		LambdaIam:     lambdaIam,
+		Code:          codeObjectConfig,
+		KmsReadPolicy: base.Policies.KmsMain.Read.Arn(),
+		KmsArns:       base.KmsMain.Arns(),
+		ApiUrl:        cfg.Vars.Domain.RegionalUrlTemplate(),
+	}.New(SimpleContext(stack, "match_publish", base.Providers.Main))
+
+	MatchMakeConfig{
+		Providers:      allProviders,
+		Name:           jsii.String(cfg.Vars.Name + "-match-make"),
+		LambdaIam:      lambdaIam,
+		Code:           codeObjectConfig,
+		KmsWritePolicy: base.Policies.KmsMain.Read.Arn(),
+		KmsArns:        base.KmsMain.Arns(),
+		MatchTables:    matchPublish.TableArns(),
+		LockTables:     lockTable.TableArns(),
+		LockRegions:    cfg.Vars.OrderedRegions(),
+	}.New(SimpleContext(stack, "match_make", base.Providers.Main))
 }

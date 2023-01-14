@@ -54,3 +54,8 @@ type LambdaIamConfig struct {
 	ExecPolicy *string
 	AssumeRole *string
 }
+
+type ArnIdPair struct {
+	Arn *string
+	Id  *string
+}
