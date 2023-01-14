@@ -24,6 +24,7 @@ func (cfg BaseConfig) New(ctx common.TfContext) base {
 	providers := providerConfig{
 		regions: cfg.Regions,
 		tags:    cfg.Tags,
+		name:    cfg.Name,
 	}.new(common.SimpleContext(ctx.Scope, ctx.Id+"_providers", nil))
 
 	datasources := dataSourceConfig{
@@ -43,6 +44,11 @@ func (cfg BaseConfig) New(ctx common.TfContext) base {
 		path:    cfg.IamPath,
 		name:    cfg.Name,
 	}.new(common.SimpleContext(ctx.Scope, ctx.Id+"_policies", providers.Main))
+
+	resourceGroupConfig{
+		providers: providers,
+		name:      cfg.Name,
+	}.new(common.SimpleContext(ctx.Scope, ctx.Id+"_rgs", providers.Main))
 
 	return base{
 		Providers:   providers,
