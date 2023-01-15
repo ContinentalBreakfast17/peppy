@@ -12,9 +12,18 @@ type ApiConfig struct {
 	Providers         common.Providers
 	Name              *string
 	KmsArns           common.MultiRegionId
-	FunctionIpLookup  map[string]*common.ArnIdPair
-	TablesHealthcheck map[string]*common.ArnIdPair
-	TablesQueues      map[string]map[string]*common.ArnIdPair
+	Queues            ApiQueueConfig
+	FunctionIpLookup  map[string]common.ArnIdPair
+	TablesHealthcheck map[string]common.ArnIdPair      
+}
+
+type ApiQueueConfig struct {
+	UnrankedSolo queue
+}
+
+type queue interface {
+	Name()   string
+	Tables() map[string]common.ArnIdPair
 }
 
 func (cfg ApiConfig) New(ctx common.TfContext) api {
