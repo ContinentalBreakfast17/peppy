@@ -59,7 +59,7 @@ const queue_sort = "queue_sort"
 
 func (cfg MatchMakeConfig) New(ctx common.TfContext) matchMakers {
 	queues := map[string]string{
-		"unranked-solo": "rust/target/lambda/process-queue-unranked-solo/bootstrap.zip",
+		common.QUEUE_UNRANKED_SOLO: "rust/target/lambda/process-queue-unranked-solo/bootstrap.zip",
 	}
 
 	result := matchMakers{}
