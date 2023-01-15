@@ -181,3 +181,9 @@ func (cfg appsyncApiInstanceConfig) new(ctx common.TfContext) appsyncApiInstance
 		DataSources: dataSources,
 	}
 }
+
+func (app appsyncApi) ApiIds() map[string]common.ArnIdPair {
+	return common.TransformMapValues(app.Regions, func(instance appsyncApiInstance) common.ArnIdPair {
+		return common.ArnIdPair{Arn: instance.Api.Arn(), Id: instance.Api.Id()}
+	})
+}
