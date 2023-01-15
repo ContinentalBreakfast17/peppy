@@ -118,19 +118,14 @@ func (cfg tablesInstanceConfig) new(ctx common.TfContext) apiTablesInstance {
 	return apiTablesInstance{IpCache: ipCacheTable, User: userTable}
 }
 
-// func (app apiTables) tableArns() map[string]common.ArnIdPair {
-// 	result := map[string]common.ArnIdPair{}
-// 	for region, instance := range app.Regions {
-// 		result[region] = []common.ArnIdPair{
-// 			{
-// 				Arn: instance.IpCache.Arn(),
-// 				Id:  instance.IpCache.Id(),
-// 			},
-// 			{
-// 				Arn: instance.User.Arn(),
-// 				Id:  instance.User.Id(),
-// 			},
-// 		}
-// 	}
-// 	return result
-// }
+func (app apiTables) userTableIds() map[string]common.ArnIdPair {
+	return common.TransformMapValues(app.Regions, func(instance apiTablesInstance) common.ArnIdPair {
+		return common.TableToIdPair(instance.User)
+	})
+}
+
+func (app apiTables) ipCacheTableIds() map[string]common.ArnIdPair {
+	return common.TransformMapValues(app.Regions, func(instance apiTablesInstance) common.ArnIdPair {
+		return common.TableToIdPair(instance.IpCache)
+	})
+}

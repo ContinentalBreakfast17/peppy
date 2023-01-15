@@ -51,6 +51,8 @@ func TransformList[before any, after any](list List[before], transform func(item
 	return result
 }
 
+// in hindsight, this is much more inefficient than simply reconstructing the map
+// leaving it because it's neat however
 func TransformMapValues[before any, after any](m map[string]before, transform func(item before) after) map[string]after {
 	return ObjectEntries[after](TransformList[ObjectEntry[before], ObjectEntry[after]](
 		Object[before](m).Entries(),

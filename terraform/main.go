@@ -50,6 +50,7 @@ func (cfg stackConfig) addTo(app cdktf.App) {
 		IamPath:        jsii.String(cfg.Vars.IamPath),
 		Regions:        cfg.Vars.Regions,
 		AdminGroupName: jsii.String(cfg.Vars.Groups.InfraAdmin),
+		Domain:         jsii.String(cfg.Vars.Domain.Name),
 	}.New(SimpleContext(stack, "base", nil))
 
 	allProviders := base.Providers.All()
@@ -91,7 +92,7 @@ func (cfg stackConfig) addTo(app cdktf.App) {
 		Name:           jsii.String(cfg.Vars.Name + "-match-make"),
 		LambdaIam:      lambdaIam,
 		Code:           codeObjectConfig,
-		KmsWritePolicy: base.Policies.KmsMain.Read.Arn(),
+		KmsWritePolicy: base.Policies.KmsMain.Write.Arn(),
 		KmsArns:        base.KmsMain.Arns(),
 		MatchTables:    matchPublish.TableIds(),
 		LockTables:     lockTable.TableIds(),
@@ -99,12 +100,15 @@ func (cfg stackConfig) addTo(app cdktf.App) {
 	}.New(SimpleContext(stack, "match_make", base.Providers.Main))
 
 	ApiConfig{
-		Providers: allProviders,
-		Name:      jsii.String(cfg.Vars.Name),
-		KmsArns:   base.KmsMain.Arns(),
-		Queues:    ApiQueueConfig{
+		Providers:      allProviders,
+		Name:           jsii.String(cfg.Vars.Name),
+		KmsArns:        base.KmsMain.Arns(),
+		KmsWritePolicy: base.Policies.KmsMain.Write.Arn(),
+		DomainName:     jsii.String(cfg.Vars.Domain.Fqdn()),
+		HostedZoneId:   base.DataSources.HostedZone.Id(),
+		Queues: ApiQueueConfig{
 			UnrankedSolo: matchMake.UnrankedSolo,
 		},
-		FunctionIpLookup: ipLookup.FunctionIds(),
+		FunctionsIpLookup: ipLookup.FunctionIds(),
 	}.New(SimpleContext(stack, "api", base.Providers.Main))
 }

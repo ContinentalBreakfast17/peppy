@@ -18,6 +18,7 @@ type BaseConfig struct {
 	AdminGroupName *string
 	Name           *string
 	IamPath        *string
+	Domain         *string
 }
 
 func (cfg BaseConfig) New(ctx common.TfContext) base {
@@ -29,6 +30,7 @@ func (cfg BaseConfig) New(ctx common.TfContext) base {
 
 	datasources := dataSourceConfig{
 		adminGroupName: cfg.AdminGroupName,
+		domain:         cfg.Domain,
 	}.new(common.SimpleContext(ctx.Scope, ctx.Id+"_data", providers.Main))
 
 	kmsMain := keyConfig{

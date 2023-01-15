@@ -242,7 +242,7 @@ func (cfg instanceConfig) new(ctx common.TfContext) matchPublishInstance {
 }
 
 func (app matchPublish) TableIds() map[string]common.ArnIdPair {
-	return common.TransformMapValues(app.Regions, func(instance matchPublishInstance) common.ArnIdPair{
+	return common.TransformMapValues(app.Regions, func(instance matchPublishInstance) common.ArnIdPair {
 		return common.TableToIdPair(instance.Table)
 	})
 }
