@@ -8,6 +8,18 @@ import (
 	"strings"
 )
 
+type Paths struct {
+	Stacks string
+	Vtl    string
+	Schema string
+}
+
+type Config struct {
+	Stacks []Stack
+	Vtl    map[string]*string
+	Schema string
+}
+
 type Stack struct {
 	StackName string
 	Vars      StackVars
@@ -50,33 +62,72 @@ type VarsGroups struct {
 	InfraAdmin string `json:"infraAdmin"`
 }
 
-func LoadStacks(path string) ([]Stack, error) {
-	files, err := os.ReadDir(path)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to read dir: %w", err)
+func (paths Paths) LoadConfig() (cfg Config, err error) {
+	if cfg.Stacks, err = paths.loadStacks(); err != nil {
+		return cfg, fmt.Errorf("Failed to load stacks: %w", err)
+	} else if cfg.Vtl, err = paths.loadVtl(); err != nil {
+		return cfg, fmt.Errorf("Failed to load vtl: %w", err)
+	} else if cfg.Schema, err = paths.loadSchema(); err != nil {
+		return cfg, fmt.Errorf("Failed to load schema: %w", err)
+	}
+	return cfg, nil
+}
+
+func (paths Paths) loadStacks() ([]Stack, error) {
+	stacks := []Stack{}
+	processFile := func(filename string, contents []byte) error {
+		stack := Stack{StackName: strings.TrimSuffix(filename, ".json")}
+		if err := json.Unmarshal(contents, &stack.Vars); err != nil {
+			return fmt.Errorf("Invalid json: %w", err)
+		}
+
+		// todo: validate vars
+		stacks = append(stacks, stack)
+		return nil
 	}
 
-	stacks := []Stack{}
+	return stacks, processDir(paths.Stacks, ".json", processFile)
+}
+
+func (paths Paths) loadVtl() (map[string]*string, error) {
+	templates := map[string]*string{}
+	processFile := func(filename string, contents []byte) error {
+		s := string(contents)
+		templates[filename] = &s
+		return nil
+	}
+
+	return templates, processDir(paths.Vtl, ".vm", processFile)
+}
+
+func (paths Paths) loadSchema() (string, error) {
+	schema := ""
+	processFile := func(filename string, contents []byte) error {
+		schema = fmt.Sprintf("%s\n\n#%s\n\n%s", schema, filename, string(contents))
+		return nil
+	}
+
+	return schema, processDir(paths.Schema, ".graphql", processFile)
+}
+
+func processDir(dir string, suffix string, processFile func(filename string, contents []byte) error) error {
+	files, err := os.ReadDir(dir)
+	if err != nil {
+		return fmt.Errorf("Failed to read dir: %w", err)
+	}
+
 	for _, file := range files {
-		if strings.HasSuffix(file.Name(), ".json") {
-			filename := filepath.Join(path, file.Name())
+		if strings.HasSuffix(file.Name(), suffix) {
+			filename := filepath.Join(dir, file.Name())
 			contents, err := os.ReadFile(filename)
 			if err != nil {
-				return nil, fmt.Errorf("Failed to read file: %w", err)
+				return fmt.Errorf("Failed to read file: %w", err)
+			} else if err = processFile(filename, contents); err != nil {
+				return fmt.Errorf("Failed to process file '%s': %w", filename, err)
 			}
-
-			stack := Stack{StackName: strings.TrimSuffix(file.Name(), ".json")}
-			if err := json.Unmarshal(contents, &stack.Vars); err != nil {
-				return nil, fmt.Errorf("Failed to read json file '%s': %w", filename, err)
-			}
-
-			// todo: validate vars
-
-			stacks = append(stacks, stack)
 		}
 	}
-
-	return stacks, nil
+	return nil
 }
 
 // this is important as lock tables need to be processed in order
