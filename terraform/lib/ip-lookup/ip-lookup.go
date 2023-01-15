@@ -171,7 +171,7 @@ func (cfg instanceConfig) new(ctx common.TfContext) ipLookupInstance {
 }
 
 func (app ipLookup) FunctionIds() map[string]common.ArnIdPair {
-	return common.TransformMapValues(app.Regions, func(instance ipLookupInstance) common.ArnIdPair{
+	return common.TransformMapValues(app.Regions, func(instance ipLookupInstance) common.ArnIdPair {
 		return common.FunctionToIdPair(instance.Function)
 	})
 }

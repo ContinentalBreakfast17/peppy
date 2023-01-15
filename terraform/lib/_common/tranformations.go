@@ -12,3 +12,10 @@ func TableToIdPair(table DataAwsDynamodbTable) ArnIdPair {
 func FunctionToIdPair(function LambdaFunction) ArnIdPair {
 	return ArnIdPair{Arn: function.Arn(), Id: function.FunctionName()}
 }
+
+func ArnsToList(pairs map[string]ArnIdPair) (result []*string) {
+	for _, pair := range pairs {
+		result = append(result, pair.Arn)
+	}
+	return
+}

@@ -5,15 +5,18 @@ import (
 	"github.com/aws/jsii-runtime-go"
 	. "github.com/cdktf/cdktf-provider-aws-go/aws/v10/dataawscalleridentity"
 	. "github.com/cdktf/cdktf-provider-aws-go/aws/v10/dataawsiamgroup"
+	. "github.com/cdktf/cdktf-provider-aws-go/aws/v10/dataawsroute53zone"
 )
 
 type dataSources struct {
 	DataAwsCallerIdentity
-	Admins DataAwsIamGroup
+	Admins     DataAwsIamGroup
+	HostedZone DataAwsRoute53Zone
 }
 
 type dataSourceConfig struct {
 	adminGroupName *string
+	domain         *string
 }
 
 func (cfg dataSourceConfig) new(ctx common.TfContext) dataSources {
@@ -25,7 +28,13 @@ func (cfg dataSourceConfig) new(ctx common.TfContext) dataSources {
 		Provider:  ctx.Provider,
 		GroupName: cfg.adminGroupName,
 	})
-	return dataSources{caller, admins}
+
+	zone := NewDataAwsRoute53Zone(ctx.Scope, jsii.String(ctx.Id+"_zone"), &DataAwsRoute53ZoneConfig{
+		Provider: ctx.Provider,
+		Name:     jsii.String(*cfg.domain + "."),
+	})
+
+	return dataSources{caller, admins, zone}
 }
 
 func (data dataSources) AdminUsers() *[]*string {

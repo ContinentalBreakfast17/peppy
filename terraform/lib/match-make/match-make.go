@@ -146,9 +146,9 @@ func (cfg queueConfig) new(ctx common.TfContext) queue {
 	for region, provider := range cfg.Providers {
 		instances[region] = instanceConfig{
 			queueConfig: cfg,
-			region:          region,
-			role:            lambdaRole.Arn(),
-			table:           queueTable.Id(),
+			region:      region,
+			role:        lambdaRole.Arn(),
+			table:       queueTable.Id(),
 		}.new(common.SimpleContext(ctx.Scope, ctx.Id+"_"+region, provider))
 	}
 
@@ -210,15 +210,8 @@ func (cfg queueConfig) lambdaRole(ctx common.TfContext) IamRole {
 		PolicyArn: cfg.KmsWritePolicy,
 	})
 
-	lockTables := []*string{}
-	for _, table := range cfg.LockTables {
-		lockTables = append(lockTables, table.Arn)
-	}
-
-	matchTables := []*string{}
-	for _, table := range cfg.MatchTables {
-		matchTables = append(matchTables, table.Arn)
-	}
+	lockTables := common.ArnsToList(cfg.LockTables)
+	matchTables := common.ArnsToList(cfg.MatchTables)
 
 	NewIamRolePolicy(ctx.Scope, jsii.String(ctx.Id+"_tables_policy"), &IamRolePolicyConfig{
 		Provider: ctx.Provider,
@@ -323,7 +316,7 @@ func (queue queue) Name() string {
 }
 
 func (queue queue) Tables() map[string]common.ArnIdPair {
-	return common.TransformMapValues(queue.Regions, func(instance queueInstance) common.ArnIdPair{
+	return common.TransformMapValues(queue.Regions, func(instance queueInstance) common.ArnIdPair {
 		return common.TableToIdPair(instance.Table)
 	})
 }
