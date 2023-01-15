@@ -3,6 +3,7 @@ package main
 import (
 	. "github.com/ContinentalBreakfast17/peppy/terraform/lib/_common"
 	"github.com/ContinentalBreakfast17/peppy/terraform/lib/_config"
+	. "github.com/ContinentalBreakfast17/peppy/terraform/lib/api"
 	. "github.com/ContinentalBreakfast17/peppy/terraform/lib/base"
 	. "github.com/ContinentalBreakfast17/peppy/terraform/lib/ip-lookup"
 	. "github.com/ContinentalBreakfast17/peppy/terraform/lib/lock-table"
@@ -94,4 +95,10 @@ func (cfg stackConfig) addTo(app cdktf.App) {
 		LockTables:     lockTable.TableArns(),
 		LockRegions:    cfg.Vars.OrderedRegions(),
 	}.New(SimpleContext(stack, "match_make", base.Providers.Main))
+
+	ApiConfig{
+		Providers: allProviders,
+		Name:      jsii.String(cfg.Vars.Name),
+		KmsArns:   base.KmsMain.Arns(),
+	}.New(SimpleContext(stack, "api", base.Providers.Main))
 }

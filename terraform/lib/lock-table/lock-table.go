@@ -24,7 +24,6 @@ type LockTableConfig struct {
 type instanceConfig struct {
 	LockTableConfig
 	region string
-	role   *string
 	table  *string
 }
 
