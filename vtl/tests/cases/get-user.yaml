@@ -1,7 +1,7 @@
 tests:
   # request checks
   - name: Req
-    file: &req-file get-mmr.req.vm
+    file: &req-file get-user.req.vm
     context:
       stash:
         user: abc#123
@@ -14,7 +14,7 @@ tests:
 
   # response checks
   - name: Resp - Success
-    file: &resp-file get-mmr.resp.vm
+    file: &resp-file get-user.resp.vm
     context:
       result:
         value: 1800

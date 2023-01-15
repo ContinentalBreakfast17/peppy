@@ -50,8 +50,8 @@ func (cfg healthcheckAlarmConfig) new(ctx common.TfContext) healthcheckAlarm {
 
 func (cfg healthcheckAlarmInstanceConfig) new(ctx common.TfContext) healthcheckAlarmInstance {
 	topic := NewSnsTopic(ctx.Scope, jsii.String(ctx.Id+"_topic"), &SnsTopicConfig{
-		Provider:       ctx.Provider,
-		Name:           cfg.name,
+		Provider: ctx.Provider,
+		Name:     cfg.name,
 		// skipping encryption out of sheer laziness for now
 		// KmsMasterKeyId: cfg.healthchecker.Regions[cfg.region].Table.ServerSideEncryptionInput().KmsKeyArn(),
 	})

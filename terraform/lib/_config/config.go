@@ -70,6 +70,7 @@ func (paths Paths) LoadConfig() (cfg Config, err error) {
 	} else if cfg.Schema, err = paths.loadSchema(); err != nil {
 		return cfg, fmt.Errorf("Failed to load schema: %w", err)
 	}
+	// fmt.Println(cfg.Vtl)
 	return cfg, nil
 }
 
@@ -92,7 +93,8 @@ func (paths Paths) loadStacks() ([]Stack, error) {
 func (paths Paths) loadVtl() (map[string]*string, error) {
 	templates := map[string]*string{}
 	processFile := func(filename string, contents []byte) error {
-		s := string(contents)
+		// need to escape tf interpolation, which seems silly
+		s := strings.Replace(string(contents), "${", "$${", -1)
 		templates[filename] = &s
 		return nil
 	}
@@ -122,7 +124,7 @@ func processDir(dir string, suffix string, processFile func(filename string, con
 			contents, err := os.ReadFile(filename)
 			if err != nil {
 				return fmt.Errorf("Failed to read file: %w", err)
-			} else if err = processFile(filename, contents); err != nil {
+			} else if err = processFile(file.Name(), contents); err != nil {
 				return fmt.Errorf("Failed to process file '%s': %w", filename, err)
 			}
 		}

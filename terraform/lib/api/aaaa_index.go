@@ -79,6 +79,19 @@ func (cfg ApiConfig) New(ctx common.TfContext) api {
 		tablesIpCache:     tables.ipCacheTableIds(),
 	}.new(common.SimpleContext(ctx.Scope, ctx.Id, ctx.Provider))
 
+	appsyncFunctions := appsyncFunctionsConfig{
+		providers: cfg.Providers,
+		apis:      appsyncApi,
+		vtl:       cfg.Vtl,
+	}.new(common.SimpleContext(ctx.Scope, ctx.Id+"_functions", ctx.Provider))
+
+	appsyncResolversConfig{
+		providers: cfg.Providers,
+		apis:      appsyncApi,
+		functions: appsyncFunctions,
+		vtl:       cfg.Vtl,
+	}.new(common.SimpleContext(ctx.Scope, ctx.Id+"_resolvers", ctx.Provider))
+
 	return api{
 		tables:     tables,
 		role:       role,
