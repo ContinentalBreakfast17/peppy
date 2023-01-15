@@ -97,18 +97,19 @@ func (cfg keyConfig) policy(ctx common.TfContext) DataAwsIamPolicyDocument {
 					},
 				},
 			},
-			{
-				Sid:       jsii.String("AllowCloudwatchAlarms"),
-				Effect:    jsii.String("Allow"),
-				Actions:   jsii.Strings("kms:Decrypt", "kms:GenerateDataKey*"),
-				Resources: jsii.Strings("*"),
-				Principals: []DataAwsIamPolicyDocumentStatementPrincipals{
-					{
-						Type:        jsii.String("Service"),
-						Identifiers: jsii.Strings("cloudwatch.amazonaws.com", "sns.amazonaws.com"),
-					},
-				},
-			},
+			// this is needed if the sns topic gets encrypted again. I imagine there should be a limiting condition
+			// {
+			// 	Sid:       jsii.String("AllowCloudwatchAlarms"),
+			// 	Effect:    jsii.String("Allow"),
+			// 	Actions:   jsii.Strings("kms:Decrypt", "kms:GenerateDataKey*"),
+			// 	Resources: jsii.Strings("*"),
+			// 	Principals: []DataAwsIamPolicyDocumentStatementPrincipals{
+			// 		{
+			// 			Type:        jsii.String("Service"),
+			// 			Identifiers: jsii.Strings("cloudwatch.amazonaws.com", "sns.amazonaws.com"),
+			// 		},
+			// 	},
+			// },
 		},
 	})
 
