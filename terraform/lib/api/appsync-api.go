@@ -23,12 +23,12 @@ type appsyncApiInstance struct {
 }
 
 type appsyncDataSources struct {
-	// Healthcheck AppsyncDatasource
-	Noop     AppsyncDatasource
-	IpLookup AppsyncDatasource
-	IpCache  AppsyncDatasource
-	User     AppsyncDatasource
-	Queues   appsyncQueueDataSources
+	Noop        AppsyncDatasource
+	IpLookup    AppsyncDatasource
+	IpCache     AppsyncDatasource
+	User        AppsyncDatasource
+	Healthcheck AppsyncDatasource
+	Queues      appsyncQueueDataSources
 }
 
 type appsyncQueueDataSources struct {
@@ -159,6 +159,16 @@ func (cfg appsyncApiInstanceConfig) new(ctx common.TfContext) appsyncApiInstance
 			ServiceRoleArn: cfg.role,
 			DynamodbConfig: &AppsyncDatasourceDynamodbConfig{
 				TableName: cfg.tablesUser[cfg.region].Id,
+			},
+		}),
+		Healthcheck: NewAppsyncDatasource(ctx.Scope, jsii.String(ctx.Id+"_datasource_healthcheck"), &AppsyncDatasourceConfig{
+			Provider:       ctx.Provider,
+			ApiId:          api.Id(),
+			Name:           jsii.String("healthcheck"),
+			Type:           jsii.String("AMAZON_DYNAMODB"),
+			ServiceRoleArn: cfg.role,
+			DynamodbConfig: &AppsyncDatasourceDynamodbConfig{
+				TableName: cfg.tablesHealthcheck[cfg.region].Id,
 			},
 		}),
 		Queues: appsyncQueueDataSources{

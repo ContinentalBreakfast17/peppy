@@ -110,15 +110,15 @@ func (cfg stackConfig) addTo(app cdktf.App) {
 	}.New(SimpleContext(stack, "match_make", base.Providers.Main))
 
 	healthcheck := HealthcheckConfig{
-		Providers:     allProviders,
-		Name:          jsii.String(cfg.Vars.Name + "-healthcheck"),
-		LambdaIam:     lambdaIam,
-		Code:          codeObjectConfig,
-		KmsReadPolicy: base.Policies.KmsMain.Read.Arn(),
+		Providers:      allProviders,
+		Name:           jsii.String(cfg.Vars.Name + "-healthcheck"),
+		LambdaIam:      lambdaIam,
+		Code:           codeObjectConfig,
+		KmsReadPolicy:  base.Policies.KmsMain.Read.Arn(),
 		KmsWritePolicy: base.Policies.KmsMain.Write.Arn(),
-		KmsArns:       base.KmsMain.Arns(),
-		ApiUrl:        cfg.Vars.Domain.RegionalUrlTemplate(),
-		SendAlarmsTo:  cfg.Vars.Alarms.SendTo,
+		KmsArns:        base.KmsMain.Arns(),
+		ApiUrl:         cfg.Vars.Domain.RegionalUrlTemplate(),
+		SendAlarmsTo:   cfg.Vars.Alarms.SendTo,
 	}.New(SimpleContext(stack, "healthcheck", base.Providers.Main))
 
 	api := ApiConfig{
