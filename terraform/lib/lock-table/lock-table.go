@@ -90,10 +90,8 @@ func (cfg instanceConfig) new(ctx common.TfContext) lockTableInstance {
 	return lockTableInstance{table}
 }
 
-func (app lockTable) TableArns() map[string]common.ArnIdPair {
-	result := map[string]common.ArnIdPair{}
-	for region, instance := range app.Regions {
-		result[region] = common.ArnIdPair{Arn: instance.Table.Arn(), Id: instance.Table.Id()}
-	}
-	return result
+func (app lockTable) TableIds() map[string]common.ArnIdPair {
+	return common.TransformMapValues(app.Regions, func(instance lockTableInstance) common.ArnIdPair{
+		return common.TableToIdPair(instance.Table)
+	})
 }

@@ -59,7 +59,9 @@ func (cfg stackConfig) addTo(app cdktf.App) {
 		AssumeRole: base.Policies.LambdaAssumeRole.Json(),
 	}
 
-	IpLookupConfig{
+	// meaningful resources start here
+
+	ipLookup := IpLookupConfig{
 		Providers:     allProviders,
 		Name:          jsii.String(cfg.Vars.Name + "-ip-lookup"),
 		LambdaIam:     lambdaIam,
@@ -84,15 +86,15 @@ func (cfg stackConfig) addTo(app cdktf.App) {
 		ApiUrl:        cfg.Vars.Domain.RegionalUrlTemplate(),
 	}.New(SimpleContext(stack, "match_publish", base.Providers.Main))
 
-	MatchMakeConfig{
+	matchMake := MatchMakeConfig{
 		Providers:      allProviders,
 		Name:           jsii.String(cfg.Vars.Name + "-match-make"),
 		LambdaIam:      lambdaIam,
 		Code:           codeObjectConfig,
 		KmsWritePolicy: base.Policies.KmsMain.Read.Arn(),
 		KmsArns:        base.KmsMain.Arns(),
-		MatchTables:    matchPublish.TableArns(),
-		LockTables:     lockTable.TableArns(),
+		MatchTables:    matchPublish.TableIds(),
+		LockTables:     lockTable.TableIds(),
 		LockRegions:    cfg.Vars.OrderedRegions(),
 	}.New(SimpleContext(stack, "match_make", base.Providers.Main))
 
@@ -100,5 +102,9 @@ func (cfg stackConfig) addTo(app cdktf.App) {
 		Providers: allProviders,
 		Name:      jsii.String(cfg.Vars.Name),
 		KmsArns:   base.KmsMain.Arns(),
+		Queues:    ApiQueueConfig{
+			UnrankedSolo: matchMake.UnrankedSolo,
+		},
+		FunctionIpLookup: ipLookup.FunctionIds(),
 	}.New(SimpleContext(stack, "api", base.Providers.Main))
 }

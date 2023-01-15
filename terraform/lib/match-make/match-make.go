@@ -19,14 +19,18 @@ import (
 	"github.com/hashicorp/terraform-cdk-go/cdktf"
 )
 
-type matchMakers map[string]matchMake
-
-type matchMake struct {
-	Regions    map[string]matchMakeInstance
-	LambdaRole IamRole
+type matchMakers struct {
+	UnrankedSolo queue
 }
 
-type matchMakeInstance struct {
+type queue struct {
+	Regions      map[string]queueInstance
+	LambdaRole   IamRole
+	name         string
+	codeLocation string
+}
+
+type queueInstance struct {
 	Function LambdaFunction
 	Table    DataAwsDynamodbTable
 }
@@ -43,13 +47,13 @@ type MatchMakeConfig struct {
 	LockRegions    []string
 }
 
-type matchMakeConfig struct {
+type queueConfig struct {
 	MatchMakeConfig
 	codeLocation string
 }
 
 type instanceConfig struct {
-	matchMakeConfig
+	queueConfig
 	region string
 	role   *string
 	table  *string
@@ -58,21 +62,31 @@ type instanceConfig struct {
 const queue_sort = "queue_sort"
 
 func (cfg MatchMakeConfig) New(ctx common.TfContext) matchMakers {
-	queues := map[string]string{
-		common.QUEUE_UNRANKED_SOLO: "rust/target/lambda/process-queue-unranked-solo/bootstrap.zip",
+	// init queue info
+	result := matchMakers{
+		UnrankedSolo: queue{
+			name:         common.QUEUE_UNRANKED_SOLO,
+			codeLocation: "rust/target/lambda/process-queue-unranked-solo/bootstrap.zip",
+		},
 	}
 
-	result := matchMakers{}
-	for queue, codeLocation := range queues {
-		result[queue] = matchMakeConfig{
+	// loop to create all queues
+	queues := []*queue{
+		&result.UnrankedSolo,
+	}
+
+	for _, queue := range queues {
+		qResult := queueConfig{
 			MatchMakeConfig: cfg,
-			codeLocation:    codeLocation,
-		}.new(common.SimpleContext(ctx.Scope, ctx.Id+"-"+queue, ctx.Provider))
+			codeLocation:    queue.codeLocation,
+		}.new(common.SimpleContext(ctx.Scope, ctx.Id+"-"+queue.name, ctx.Provider))
+		queue.Regions = qResult.Regions
+		queue.LambdaRole = qResult.LambdaRole
 	}
 	return result
 }
 
-func (cfg matchMakeConfig) new(ctx common.TfContext) matchMake {
+func (cfg queueConfig) new(ctx common.TfContext) queue {
 	// create tables w/ replicas in each region
 	tableReplicas := []DynamodbTableReplica{}
 	for region, arn := range cfg.KmsArns.Replicas {
@@ -128,10 +142,10 @@ func (cfg matchMakeConfig) new(ctx common.TfContext) matchMake {
 	lambdaRole := cfg.lambdaRole(common.SimpleContext(ctx.Scope, ctx.Id+"_lambda_role", ctx.Provider))
 
 	// create an instance of the service in each region
-	instances := map[string]matchMakeInstance{}
+	instances := map[string]queueInstance{}
 	for region, provider := range cfg.Providers {
 		instances[region] = instanceConfig{
-			matchMakeConfig: cfg,
+			queueConfig: cfg,
 			region:          region,
 			role:            lambdaRole.Arn(),
 			table:           queueTable.Id(),
@@ -173,10 +187,10 @@ func (cfg matchMakeConfig) new(ctx common.TfContext) matchMake {
 		}).Json(),
 	})
 
-	return matchMake{instances, lambdaRole}
+	return queue{Regions: instances, LambdaRole: lambdaRole}
 }
 
-func (cfg matchMakeConfig) lambdaRole(ctx common.TfContext) IamRole {
+func (cfg queueConfig) lambdaRole(ctx common.TfContext) IamRole {
 	lambdaRole := NewIamRole(ctx.Scope, jsii.String(ctx.Id), &IamRoleConfig{
 		Provider:         ctx.Provider,
 		Name:             jsii.String(*cfg.Name + "-lambda"),
@@ -229,7 +243,7 @@ func (cfg matchMakeConfig) lambdaRole(ctx common.TfContext) IamRole {
 	return lambdaRole
 }
 
-func (cfg instanceConfig) new(ctx common.TfContext) matchMakeInstance {
+func (cfg instanceConfig) new(ctx common.TfContext) queueInstance {
 	logGroup := NewCloudwatchLogGroup(ctx.Scope, jsii.String(ctx.Id+"_logs"), &CloudwatchLogGroupConfig{
 		Provider:        ctx.Provider,
 		Name:            jsii.String("/aws/lambda/" + *cfg.Name),
@@ -301,5 +315,15 @@ func (cfg instanceConfig) new(ctx common.TfContext) matchMakeInstance {
 		},
 	})
 
-	return matchMakeInstance{lambda, table}
+	return queueInstance{lambda, table}
+}
+
+func (queue queue) Name() string {
+	return queue.name
+}
+
+func (queue queue) Tables() map[string]common.ArnIdPair {
+	return common.TransformMapValues(queue.Regions, func(instance queueInstance) common.ArnIdPair{
+		return common.TableToIdPair(instance.Table)
+	})
 }

@@ -241,10 +241,8 @@ func (cfg instanceConfig) new(ctx common.TfContext) matchPublishInstance {
 	return matchPublishInstance{lambda, table}
 }
 
-func (app matchPublish) TableArns() map[string]common.ArnIdPair {
-	result := map[string]common.ArnIdPair{}
-	for region, instance := range app.Regions {
-		result[region] = common.ArnIdPair{Arn: instance.Table.Arn(), Id: instance.Table.Id()}
-	}
-	return result
+func (app matchPublish) TableIds() map[string]common.ArnIdPair {
+	return common.TransformMapValues(app.Regions, func(instance matchPublishInstance) common.ArnIdPair{
+		return common.TableToIdPair(instance.Table)
+	})
 }
