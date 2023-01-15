@@ -13,18 +13,27 @@ import (
 	"github.com/hashicorp/terraform-cdk-go/cdktf"
 )
 
-type stackConfig config.Stack
+type stackConfig struct {
+	config.Stack
+	config.Config
+}
 
 func main() {
 	// read config
-	stacks, err := config.LoadStacks("config")
+	cfg, err := config.Paths{
+		// probably a better way to form these paths
+		Stacks: "config",
+		Schema: "../schema",
+		Vtl:    "../vtl",
+	}.LoadConfig()
+
 	if err != nil {
 		panic(err)
 	}
 
 	app := cdktf.NewApp(nil)
-	for _, stack := range stacks {
-		(stackConfig(stack)).addTo(app)
+	for _, stack := range cfg.Stacks {
+		(stackConfig{stack, cfg}).addTo(app)
 	}
 
 	app.Synth()
@@ -100,15 +109,17 @@ func (cfg stackConfig) addTo(app cdktf.App) {
 	}.New(SimpleContext(stack, "match_make", base.Providers.Main))
 
 	ApiConfig{
-		Providers:      allProviders,
-		Name:           jsii.String(cfg.Vars.Name),
-		KmsArns:        base.KmsMain.Arns(),
-		KmsWritePolicy: base.Policies.KmsMain.Write.Arn(),
-		DomainName:     jsii.String(cfg.Vars.Domain.Fqdn()),
-		HostedZoneId:   base.DataSources.HostedZone.Id(),
+		Providers:         allProviders,
+		Name:              jsii.String(cfg.Vars.Name),
+		Schema:            cfg.Schema,
+		Vtl:               cfg.Vtl,
+		KmsArns:           base.KmsMain.Arns(),
+		KmsWritePolicy:    base.Policies.KmsMain.Write.Arn(),
+		DomainName:        jsii.String(cfg.Vars.Domain.Fqdn()),
+		HostedZoneId:      base.DataSources.HostedZone.Id(),
+		FunctionsIpLookup: ipLookup.FunctionIds(),
 		Queues: ApiQueueConfig{
 			UnrankedSolo: matchMake.UnrankedSolo,
 		},
-		FunctionsIpLookup: ipLookup.FunctionIds(),
 	}.New(SimpleContext(stack, "api", base.Providers.Main))
 }

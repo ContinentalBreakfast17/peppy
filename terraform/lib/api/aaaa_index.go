@@ -6,6 +6,7 @@ import (
 )
 
 type api struct {
+	appsyncApi
 	tables apiTables
 	role   appsyncRole
 	cert   appsyncCert
@@ -14,6 +15,8 @@ type api struct {
 type ApiConfig struct {
 	Providers         common.Providers
 	Name              *string
+	Schema            string
+	Vtl               map[string]*string
 	IamPath           *string
 	KmsWritePolicy    *string
 	KmsArns           common.MultiRegionId
@@ -60,9 +63,26 @@ func (cfg ApiConfig) New(ctx common.TfContext) api {
 		hostedZone: cfg.HostedZoneId,
 	}.new(common.SimpleContext(ctx.Scope, ctx.Id+"_cert", ctx.Provider))
 
+	appsyncApi := appsyncApiConfig{
+		providers:         cfg.Providers,
+		name:              cfg.Name,
+		schema:            cfg.Schema,
+		domainName:        cfg.DomainName,
+		hostedZone:        cfg.HostedZoneId,
+		role:              role.Arn(),
+		cert:              cert.Arn(),
+		certValidation:    cert.Validation,
+		queues:            cfg.Queues,
+		functionsIpLookup: cfg.FunctionsIpLookup,
+		tablesHealthcheck: cfg.TablesHealthcheck,
+		tablesUser:        tables.userTableIds(),
+		tablesIpCache:     tables.ipCacheTableIds(),
+	}.new(common.SimpleContext(ctx.Scope, ctx.Id, ctx.Provider))
+
 	return api{
-		tables: tables,
-		role:   role,
-		cert:   cert,
+		tables:     tables,
+		role:       role,
+		cert:       cert,
+		appsyncApi: appsyncApi,
 	}
 }
