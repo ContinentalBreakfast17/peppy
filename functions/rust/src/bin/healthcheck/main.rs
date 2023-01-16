@@ -2,6 +2,7 @@ use aws_lambda_events::event::cloudwatch_events::CloudWatchEvent;
 use aws_sdk_dynamodb as dynamodb;
 use lambda_runtime::{service_fn, Error, LambdaEvent};
 use serde::{Serialize, Deserialize};
+use svix_ksuid::*;
 
 struct Client {
     client:        appsync::Client,
@@ -41,7 +42,7 @@ impl Client {
 
     async fn run(&self, event: LambdaEvent<CloudWatchEvent>) -> Result<(),  Box<dyn std::error::Error + Send + Sync>> {
         println!("event id: {:?}", event.payload.id);
-        let id = ksuid::Ksuid::generate();
+        let id = Ksuid::new(None, None);
 
         let req = appsync::GraphqlRequest{
             query: HEALTCHECK_QUERY.to_string(),
@@ -50,7 +51,7 @@ impl Client {
 
         self.client.subscribe(req, process_subscription, 2000, 10000).await?;
 
-        let completion_ts = ksuid::Ksuid::generate().time().sec;
+        let completion_ts = Ksuid::new(None, None).timestamp_seconds();
         self.dynamo_client.update_item()
             .table_name(&self.table)
             .key("region", dynamodb::model::AttributeValue::S(self.region.clone()))

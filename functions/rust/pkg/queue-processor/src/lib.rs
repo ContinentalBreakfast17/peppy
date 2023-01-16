@@ -3,6 +3,7 @@ use aws_lambda_events::event::dynamodb::Event;
 use aws_sdk_dynamodb as dynamodb;
 use futures::{stream, StreamExt};
 use lambda_runtime::{service_fn, Error, LambdaEvent};
+use svix_ksuid::*;
 
 pub struct Client<QueueItem: serde::de::DeserializeOwned + serde::Serialize + Identifiable> {
     region:        String,
@@ -62,7 +63,7 @@ pub async fn handler<QueueItem: serde::de::DeserializeOwned + serde::Serialize +
 }
 
 async fn run_wrapper<QueueItem: serde::de::DeserializeOwned + serde::Serialize + Identifiable>(p: &dyn Processor<QueueItem>) -> Result<(), Error> {
-    let execution_id = ksuid::Ksuid::generate();
+    let execution_id = Ksuid::new(None, None);
 
     match run(p, execution_id).await {
         Ok(_) => Ok(()),
@@ -78,7 +79,7 @@ async fn run_wrapper<QueueItem: serde::de::DeserializeOwned + serde::Serialize +
     }
 }
 
-async fn run<QueueItem: serde::de::DeserializeOwned + serde::Serialize + Identifiable>(p: &dyn Processor<QueueItem>, execution_id: ksuid::Ksuid) -> Result<(), Error> {
+async fn run<QueueItem: serde::de::DeserializeOwned + serde::Serialize + Identifiable>(p: &dyn Processor<QueueItem>, execution_id: Ksuid) -> Result<(), Error> {
     let client = p.client();
 
     // first, check if the region is reasonably healthy
@@ -228,7 +229,7 @@ impl<QueueItem: serde::de::DeserializeOwned + serde::Serialize + Identifiable> C
         })
     }
 
-    async fn check_health(&self, execution_id: ksuid::Ksuid) -> Result<(bool, usize), Error> {
+    async fn check_health(&self, execution_id: Ksuid) -> Result<(bool, usize), Error> {
         for (index, lock_client) in self.lock_clients.iter().enumerate() {
             let region = self.lock_regions.iter().nth(index).expect("invalid region index");
             let query_result = lock_client.query()
@@ -249,7 +250,7 @@ impl<QueueItem: serde::de::DeserializeOwned + serde::Serialize + Identifiable> C
                         Some(items) => items.iter().all(|item| match item.get("timestamp") {
                             Some(timestamp_av) => match timestamp_av {
                                 aws_sdk_dynamodb::model::AttributeValue::N(timestamp_str) => match timestamp_str.parse::<u64>() {
-                                    Ok(timestamp) => timestamp >= (execution_id.time().sec - 300).try_into().unwrap(),
+                                    Ok(timestamp) => timestamp >= (execution_id.timestamp_seconds() - 300).try_into().unwrap(),
                                     Err(_) => false
                                 }
                                 _ => false
@@ -276,7 +277,7 @@ impl<QueueItem: serde::de::DeserializeOwned + serde::Serialize + Identifiable> C
         Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, "all regions failed")))
     }
 
-    async fn obtain_lock(&self, execution_id: ksuid::Ksuid, lock_region_index: usize) -> Result<bool, Error> {
+    async fn obtain_lock(&self, execution_id: Ksuid, lock_region_index: usize) -> Result<bool, Error> {
         let lock_client =  self.lock_clients.iter().nth(lock_region_index).expect("no matching lock client");
         // todo: time values should be closely related to function timeout, maybe configurable via env var?
         let put_result = lock_client.put_item()
@@ -284,10 +285,10 @@ impl<QueueItem: serde::de::DeserializeOwned + serde::Serialize + Identifiable> C
             .item("process", dynamodb::model::AttributeValue::S(format!("queue#{}", self.queue_table)))
             .item("sk", dynamodb::model::AttributeValue::S("lock".to_string()))
             .item("region", dynamodb::model::AttributeValue::S(self.region.clone()))
-            .item("ttl", dynamodb::model::AttributeValue::N((execution_id.time().sec + 90).to_string()))
+            .item("ttl", dynamodb::model::AttributeValue::N((execution_id.timestamp_seconds() + 90).to_string()))
             .condition_expression("attribute_not_exists(#ttl) or #ttl < :now_minus_timeout")
             .expression_attribute_names("#ttl", "ttl")
-            .expression_attribute_values(":now_minus_timeout", dynamodb::model::AttributeValue::N((execution_id.time().sec - 30).to_string()))
+            .expression_attribute_values(":now_minus_timeout", dynamodb::model::AttributeValue::N((execution_id.timestamp_seconds() - 30).to_string()))
             .send().await;
 
         match put_result {
@@ -363,7 +364,7 @@ impl<QueueItem: serde::de::DeserializeOwned + serde::Serialize + Identifiable> C
         }
     }
 
-    async fn publish_match(&self, execution_id: ksuid::Ksuid, players: Vec<QueueItem>) -> Result<String, Error> {
+    async fn publish_match(&self, execution_id: Ksuid, players: Vec<QueueItem>) -> Result<String, Error> {
         let id = match_id(&players);
         let players_av = match serde_dynamo::to_attribute_value(players) {
             Ok(av) => av,
@@ -382,8 +383,8 @@ impl<QueueItem: serde::de::DeserializeOwned + serde::Serialize + Identifiable> C
                             .table_name(&self.match_table)
                             .item("match", dynamodb::model::AttributeValue::S(id.clone()))
                             .item("sessionId", dynamodb::model::AttributeValue::S(execution_id.to_base62()))
-                            .item("timestamp", dynamodb::model::AttributeValue::N(execution_id.time().sec.to_string()))
-                            .item("ttl", dynamodb::model::AttributeValue::N((execution_id.time().sec + 3600).to_string()))
+                            .item("timestamp", dynamodb::model::AttributeValue::N(execution_id.timestamp_seconds().to_string()))
+                            .item("ttl", dynamodb::model::AttributeValue::N((execution_id.timestamp_seconds() + 3600).to_string()))
                             .item("queue", dynamodb::model::AttributeValue::S(self.queue_table.clone()))
                             .item("players", players_av)
                             .build()
@@ -398,7 +399,7 @@ impl<QueueItem: serde::de::DeserializeOwned + serde::Serialize + Identifiable> C
         }
     }
 
-    async fn record_error(&self, execution_id: ksuid::Ksuid, error: Error) -> Result<(), Error> {
+    async fn record_error(&self, execution_id: Ksuid, error: Error) -> Result<(), Error> {
         for (index, lock_client) in self.lock_clients.iter().enumerate() {
             let region = self.lock_regions.iter().nth(index).expect("invalid region index");
             let put_item_result = lock_client.put_item()
@@ -406,8 +407,8 @@ impl<QueueItem: serde::de::DeserializeOwned + serde::Serialize + Identifiable> C
                 .item("process", dynamodb::model::AttributeValue::S(format!("queue#{}#{}", self.queue_table, self.region)))
                 .item("sk", dynamodb::model::AttributeValue::S(format!("error#{}", execution_id.to_base62())))
                 .item("region", dynamodb::model::AttributeValue::S(self.region.clone()))
-                .item("timestamp", dynamodb::model::AttributeValue::N(execution_id.time().sec.to_string()))
-                .item("ttl", dynamodb::model::AttributeValue::N((execution_id.time().sec + 3600).to_string()))
+                .item("timestamp", dynamodb::model::AttributeValue::N(execution_id.timestamp_seconds().to_string()))
+                .item("ttl", dynamodb::model::AttributeValue::N((execution_id.timestamp_seconds() + 3600).to_string()))
                 .item("error", dynamodb::model::AttributeValue::S(format!("{:?}", error)))
                 .send().await;
 
