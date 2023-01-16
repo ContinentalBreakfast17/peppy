@@ -7,7 +7,11 @@ on:
       - 'terraform/**'
 
 jobs:
-  uses: Jerome1337/gofmt-action@v1.0.5
-  with:
-    gofmt-path: './terraform'
-    gofmt-flags: '-l -d'
+  fmt:
+    name: Check gofmt
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: Jerome1337/gofmt-action@v1.0.5
+        with:
+          gofmt-path: './terraform'
+          gofmt-flags: '-l -d'

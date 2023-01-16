@@ -45,10 +45,6 @@ jobs:
         with:
           node-version: "16"
 
-      # note: might be able to cache this, but it only takes like 10 seconds
-      - name: Add CDKTF
-        run: npm install --global cdktf-cli@0.14.3
-
       - name: Setup Golang with cache
         uses: magnetikonline/action-golang-cache@v3
         with:
