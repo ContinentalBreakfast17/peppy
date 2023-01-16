@@ -18,5 +18,3 @@ todo:
 - process game results
 - rust unit tests
 - integration tests
-
-jmook skilled player but that is not normally, This very very insane....They need to check him controller and disc.....Maybe he not cheating but maybe he using the game deficit ...and this cant seem on game screen..He needs to check-up
