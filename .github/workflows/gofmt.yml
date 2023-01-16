@@ -11,7 +11,11 @@ jobs:
     name: Check gofmt
     runs-on: ubuntu-20.04
     steps:
-      - uses: Jerome1337/gofmt-action@v1.0.5
+      - name: Add Go
+        uses: actions/setup-go@v3
         with:
-          gofmt-path: './terraform'
-          gofmt-flags: '-l -d'
+          go-version-file: 'terraform/go.mod'
+
+      - name: Run
+        working-directory: 'terraform'
+        run: gofmt -l -d .
