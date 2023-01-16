@@ -169,7 +169,16 @@ func (cfg healthcheckResponderInstanceConfig) new(ctx common.TfContext) healthch
 	})
 
 	filter := map[string]any{
+		// only inserts
 		"eventName": []string{"INSERT"},
+		// only for this region
+		"dynamodb": map[string]any{
+			"NewImage": map[string]any{
+				"region": map[string][]string{
+					"S": []string{cfg.region},
+				},
+			},
+		},
 	}
 	filterBytes, _ := json.Marshal(filter)
 
