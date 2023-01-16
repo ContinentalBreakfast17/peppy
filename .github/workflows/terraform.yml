@@ -68,6 +68,7 @@ jobs:
           cdktfVersion: 0.14.3
           stackName: ${{ github.event.inputs.environment || 'dev' }}
           mode: plan-only
+          commentOnPr: false
 
       - name: Archive Plan
         uses: actions/upload-artifact@v3
@@ -86,3 +87,4 @@ jobs:
           cdktfVersion: 0.14.3
           stackName: ${{ github.event.inputs.environment || 'dev' }}
           mode: auto-approve-apply
+          commentOnPr: false
