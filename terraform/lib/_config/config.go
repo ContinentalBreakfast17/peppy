@@ -138,7 +138,7 @@ func (cfg StackVars) OrderedRegions() []string {
 }
 
 func (domain VarsDomain) RegionalUrlTemplate() string {
-	return fmt.Sprintf("https://<region>.%s/graphl", domain.Fqdn())
+	return fmt.Sprintf("https://<region>.%s/graphql", domain.Fqdn())
 }
 
 func (domain VarsDomain) Fqdn() string {

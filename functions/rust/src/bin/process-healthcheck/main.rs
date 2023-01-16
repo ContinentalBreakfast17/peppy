@@ -30,13 +30,13 @@ struct Item {
     id: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, std::default::Default)]
 struct PublishHealthResponse {
     #[serde(rename = "publishHealth")]
     publish_health: Option<Healthcheck>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, std::default::Default)]
 struct Healthcheck {
     id: String,
 }

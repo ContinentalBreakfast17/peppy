@@ -29,9 +29,10 @@ pub struct GraphqlRequest<Vars: serde::Serialize> {
 }
 
 #[derive(Debug, Clone, Deserialize)]
-pub struct GraphqlResponse<Data: serde::de::DeserializeOwned> {
+pub struct GraphqlResponse<Data: serde::de::DeserializeOwned + std::default::Default> {
     #[allow(dead_code)]
     #[serde(deserialize_with = "Data::deserialize")]
+    #[serde(default)]
     pub data: Data,
     #[allow(dead_code)]
     #[serde(default)]
@@ -69,7 +70,7 @@ impl Client {
         Ok(Self { region: region, signer, config, api, host, api_client })
     }
 
-    pub async fn query<Data: serde::de::DeserializeOwned, Vars: serde::Serialize>(&self, gql_req: GraphqlRequest<Vars>) -> Result<GraphqlResponse<Data>, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn query<Data: serde::de::DeserializeOwned + std::default::Default, Vars: serde::Serialize>(&self, gql_req: GraphqlRequest<Vars>) -> Result<GraphqlResponse<Data>, Box<dyn std::error::Error + Send + Sync>> {
         let body = json!(gql_req).to_string();
         let sdk_body = SdkBody::from(body);
 
@@ -98,7 +99,7 @@ impl Client {
         message_timeout: u64,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>
     where
-        Data: serde::de::DeserializeOwned,
+        Data: serde::de::DeserializeOwned + std::default::Default,
         Vars: serde::Serialize,
         Process: Fn(GraphqlResponse<Data>) -> Fut,
         Fut: futures::Future<Output = Result<Option<()>, E>>,
@@ -393,7 +394,7 @@ struct Healthcheck {
     id: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, std::default::Default)]
 struct HealthcheckResponse {
     #[serde(rename = "healthcheck")]
     healthcheck: Option<Healthcheck>,

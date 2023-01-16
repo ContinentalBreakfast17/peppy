@@ -25,6 +25,7 @@ type ApiConfig struct {
 	Queues            ApiQueueConfig
 	FunctionsIpLookup map[string]common.ArnIdPair
 	TablesHealthcheck map[string]common.ArnIdPair
+	AlarmsHealthCheck map[string]common.ArnIdPair
 }
 
 type ApiQueueConfig struct {
@@ -77,6 +78,7 @@ func (cfg ApiConfig) New(ctx common.TfContext) api {
 		tablesHealthcheck: cfg.TablesHealthcheck,
 		tablesUser:        tables.userTableIds(),
 		tablesIpCache:     tables.ipCacheTableIds(),
+		alarmsHealthCheck: cfg.AlarmsHealthCheck,
 	}.new(common.SimpleContext(ctx.Scope, ctx.Id, ctx.Provider))
 
 	appsyncFunctions := appsyncFunctionsConfig{

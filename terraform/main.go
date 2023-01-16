@@ -132,6 +132,7 @@ func (cfg stackConfig) addTo(app cdktf.App) {
 		HostedZoneId:      base.DataSources.HostedZone.Id(),
 		FunctionsIpLookup: ipLookup.FunctionIds(),
 		TablesHealthcheck: healthcheck.Healthchecker.TableIds(),
+		AlarmsHealthCheck: healthcheck.Alarm.AlarmIds(),
 		Queues: ApiQueueConfig{
 			UnrankedSolo: matchMake.UnrankedSolo,
 		},

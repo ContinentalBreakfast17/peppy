@@ -10,12 +10,12 @@ struct Client {
     dynamo_client: dynamodb::Client,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, std::default::Default)]
 struct HealthcheckResponse {
     healthcheck: Option<Healthcheck>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, std::default::Default)]
 struct Healthcheck {
     id: String,
 }

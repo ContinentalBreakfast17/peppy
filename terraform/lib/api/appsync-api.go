@@ -8,6 +8,7 @@ import (
 	. "github.com/cdktf/cdktf-provider-aws-go/aws/v10/appsyncdomainname"
 	. "github.com/cdktf/cdktf-provider-aws-go/aws/v10/appsyncdomainnameapiassociation"
 	. "github.com/cdktf/cdktf-provider-aws-go/aws/v10/appsyncgraphqlapi"
+	. "github.com/cdktf/cdktf-provider-aws-go/aws/v10/route53healthcheck"
 	. "github.com/cdktf/cdktf-provider-aws-go/aws/v10/route53record"
 	"github.com/hashicorp/terraform-cdk-go/cdktf"
 )
@@ -49,6 +50,7 @@ type appsyncApiConfig struct {
 	tablesHealthcheck map[string]common.ArnIdPair
 	tablesUser        map[string]common.ArnIdPair
 	tablesIpCache     map[string]common.ArnIdPair
+	alarmsHealthCheck map[string]common.ArnIdPair
 }
 
 type appsyncApiInstanceConfig struct {
@@ -94,6 +96,15 @@ func (cfg appsyncApiInstanceConfig) new(ctx common.TfContext) appsyncApiInstance
 		DomainName: domainName.DomainName(),
 	})
 
+	healthcheck := NewRoute53HealthCheck(ctx.Scope, jsii.String(ctx.Id+"_healthcheck"), &Route53HealthCheckConfig{
+		Provider:                     ctx.Provider,
+		ReferenceName:                jsii.String(*cfg.name + "-" + cfg.region),
+		Type:                         jsii.String("CLOUDWATCH_METRIC"),
+		CloudwatchAlarmName:          cfg.alarmsHealthCheck[cfg.region].Id,
+		CloudwatchAlarmRegion:        jsii.String(cfg.region),
+		InsufficientDataHealthStatus: jsii.String("Unhealthy"),
+	})
+
 	NewRoute53Record(ctx.Scope, jsii.String(ctx.Id+"_dns_global"), &Route53RecordConfig{
 		Provider:      ctx.Provider,
 		ZoneId:        cfg.hostedZone,
@@ -102,7 +113,7 @@ func (cfg appsyncApiInstanceConfig) new(ctx common.TfContext) appsyncApiInstance
 		Type:          jsii.String("CNAME"),
 		Ttl:           jsii.Number(300),
 		SetIdentifier: jsii.String(cfg.region),
-		// todo: HealtCheckId
+		HealthCheckId: healthcheck.Id(),
 		LatencyRoutingPolicy: &[]Route53RecordLatencyRoutingPolicy{
 			{
 				Region: jsii.String(cfg.region),
