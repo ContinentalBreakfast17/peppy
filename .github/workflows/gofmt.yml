@@ -10,7 +10,12 @@ jobs:
   fmt:
     name: Check gofmt
     runs-on: ubuntu-20.04
+    permissions:
+      contents: read
     steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
       - name: Add Go
         uses: actions/setup-go@v3
         with:
