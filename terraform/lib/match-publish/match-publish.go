@@ -216,7 +216,22 @@ func (cfg instanceConfig) new(ctx common.TfContext) matchPublishInstance {
 	})
 
 	filter := map[string]any{
+		// only inserts/updates (not sure what an update is here actually?)
 		"eventName": []string{"MODIFY", "INSERT"},
+		// only items that include at least 1 player in this region
+		"dynamodb": map[string]any{
+			"NewImage": map[string]any{
+				"players": map[string]any{
+					"L": map[string]any{
+						"M": map[string]any{
+							"region": map[string][]string{
+								"S": []string{cfg.region},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 	filterBytes, _ := json.Marshal(filter)
 
@@ -231,7 +246,6 @@ func (cfg instanceConfig) new(ctx common.TfContext) matchPublishInstance {
 		FilterCriteria: &LambdaEventSourceMappingFilterCriteria{
 			Filter: &[]LambdaEventSourceMappingFilterCriteriaFilter{
 				{
-					// todo: enforce region match?
 					Pattern: jsii.String(string(filterBytes)),
 				},
 			},

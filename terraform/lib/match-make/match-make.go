@@ -303,7 +303,6 @@ func (cfg instanceConfig) new(ctx common.TfContext) queueInstance {
 		FilterCriteria: &LambdaEventSourceMappingFilterCriteria{
 			Filter: &[]LambdaEventSourceMappingFilterCriteriaFilter{
 				{
-					// todo: enforce region match?
 					Pattern: jsii.String(string(filterBytes)),
 				},
 			},
