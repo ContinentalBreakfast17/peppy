@@ -64,7 +64,7 @@ func (app healthcheckResponder) AddApiPerms(ctx common.TfContext, arns []*string
 	resources := []*string{}
 	for _, arn := range arns {
 		resources = append(resources, []*string{
-			jsii.String(*arn + "/types/Subscription/fields/healthcheck"),
+			jsii.String(*arn + "/types/Mutation/fields/publishHealth"),
 			jsii.String(*arn + "/types/HealthNotification/fields/*"),
 		}...)
 	}

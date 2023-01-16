@@ -51,9 +51,9 @@ func (cfg appsyncResolversConfig) new(ctx common.TfContext) appsyncResolvers {
 }
 
 func (cfg appsyncResolversInstanceConfig) new(ctx common.TfContext) appsyncResolversInstance {
-	requestTemplate := `$util.quiet($ctx.stash.put("entry_time", $util.time.nowEpochSeconds()))`
-	requestTemplate += `$util.quiet($ctx.stash.put("graphql", $ctx.info))`
-	requestTemplate += fmt.Sprintf(`$util.quiet($ctx.stash.put("region", "%s"))`, cfg.region)
+	requestTemplate := `$util.quiet($ctx.stash.put("entry_time", $util.time.nowEpochSeconds()))` + "\n"
+	requestTemplate += `$util.quiet($ctx.stash.put("graphql", $ctx.info))` + "\n"
+	requestTemplate += fmt.Sprintf(`$util.quiet($ctx.stash.put("region", "%s"))`, cfg.region) + "\n"
 	requestTemplate += `{}`
 
 	return appsyncResolversInstance{
@@ -64,7 +64,7 @@ func (cfg appsyncResolversInstanceConfig) new(ctx common.TfContext) appsyncResol
 			Type:             jsii.String("Query"),
 			Field:            jsii.String("region"),
 			RequestTemplate:  jsii.String(`{ "version": "2017-02-28", "payload": {} }`),
-			ResponseTemplate: jsii.String(fmt.Sprintf(`{ "region": "%s" }`, cfg.region)),
+			ResponseTemplate: jsii.String(fmt.Sprintf(`$util.toJson("%s")`, cfg.region)),
 		}),
 		Mutation__publishHealth: NewAppsyncResolver(ctx.Scope, jsii.String(ctx.Id+"_Mutation_publishHealth"), &AppsyncResolverConfig{
 			Provider:         ctx.Provider,
@@ -73,7 +73,7 @@ func (cfg appsyncResolversInstanceConfig) new(ctx common.TfContext) appsyncResol
 			Type:             jsii.String("Mutation"),
 			Field:            jsii.String("publishHealth"),
 			RequestTemplate:  jsii.String(requestTemplate),
-			ResponseTemplate: jsii.String(`{ "id": "$ctx.args.id" }`),
+			ResponseTemplate: jsii.String(`$util.toJson({ "id": $ctx.args.id })`),
 			PipelineConfig: &AppsyncResolverPipelineConfig{
 				Functions: jsii.Strings(
 					*cfg.fns.HealthResponse.FunctionId(),

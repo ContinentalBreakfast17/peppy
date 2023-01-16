@@ -76,10 +76,12 @@ func (cfg MatchMakeConfig) New(ctx common.TfContext) matchMakers {
 	}
 
 	for _, queue := range queues {
-		qResult := queueConfig{
+		qConfig := queueConfig{
 			MatchMakeConfig: cfg,
 			codeLocation:    queue.codeLocation,
-		}.new(common.SimpleContext(ctx.Scope, ctx.Id+"-"+queue.name, ctx.Provider))
+		}
+		qConfig.Name = jsii.String(*cfg.Name + "-" + queue.name)
+		qResult := qConfig.new(common.SimpleContext(ctx.Scope, ctx.Id+"-"+queue.name, ctx.Provider))
 		queue.Regions = qResult.Regions
 		queue.LambdaRole = qResult.LambdaRole
 	}

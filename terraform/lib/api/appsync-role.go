@@ -74,7 +74,7 @@ func (cfg appsyncRoleConfig) new(ctx common.TfContext) appsyncRole {
 				},
 				{
 					Effect:    jsii.String("Allow"),
-					Actions:   jsii.Strings("lambda:Invoke"),
+					Actions:   jsii.Strings("lambda:InvokeFunction"),
 					Resources: &lambdaArns,
 				},
 			},

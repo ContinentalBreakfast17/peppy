@@ -114,3 +114,9 @@ func (cfg healthcheckAlarmInstanceConfig) new(ctx common.TfContext) healthcheckA
 
 	return healthcheckAlarmInstance{Topic: topic, Alarm: alarm}
 }
+
+func (app healthcheckAlarm) AlarmIds() map[string]common.ArnIdPair {
+	return common.TransformMapValues(app.Regions, func(instance healthcheckAlarmInstance) common.ArnIdPair {
+		return common.ArnIdPair{Arn: instance.Alarm.Arn(), Id: instance.Alarm.AlarmName()}
+	})
+}

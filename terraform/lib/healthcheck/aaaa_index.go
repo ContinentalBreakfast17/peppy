@@ -9,7 +9,7 @@ type healthcheck struct {
 	Healthchecker healthchecker
 	Responder     healthcheckResponder
 	cron          healthcheckCron
-	alarm         healthcheckAlarm
+	Alarm         healthcheckAlarm
 }
 
 type HealthcheckConfig struct {
@@ -62,6 +62,6 @@ func (cfg HealthcheckConfig) New(ctx common.TfContext) healthcheck {
 		Healthchecker: healthchecker,
 		Responder:     healthcheckResponder,
 		cron:          healthcheckCron,
-		alarm:         healthcheckAlarm,
+		Alarm:         healthcheckAlarm,
 	}
 }
