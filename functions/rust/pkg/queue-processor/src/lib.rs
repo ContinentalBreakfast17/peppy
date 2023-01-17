@@ -1,19 +1,22 @@
 use async_trait::async_trait;
 use aws_lambda_events::event::dynamodb::Event;
 use aws_sdk_dynamodb as dynamodb;
+use aws_sdk_cloudwatch as cloudwatch;
 use futures::{stream, StreamExt};
 use lambda_runtime::{service_fn, Error, LambdaEvent};
 use svix_ksuid::*;
 
 pub struct Client<QueueItem: serde::de::DeserializeOwned + serde::Serialize + Identifiable> {
-    region:        String,
-    queue_table:   String,
-    queue_index:   String,
-    match_table:   String,
-    lock_table:    String,
-    lock_regions:  Vec<String>,
-    dynamo_client: dynamodb::Client,
-    lock_clients:  Vec<dynamodb::Client>,
+    region:          String,
+    queue_table:     String,
+    queue_index:     String,
+    match_table:     String,
+    lock_table:      String,
+    lock_regions:    Vec<String>,
+    dynamo_client:   dynamodb::Client,
+    lock_clients:    Vec<dynamodb::Client>,
+    alarm_client:    cloudwatch::Client,
+    alarms:          Vec<String>,
     queue_item_type: std::marker::PhantomData<QueueItem>,
 }
 
@@ -27,10 +30,10 @@ pub trait Identifiable {
     fn id(&self) -> String;
 }
 
-const MAX_FAILURES: i32 = 5;
 const CONCURRENT_REQUESTS: usize = 4;
 static AWS_CONFIG: once_cell::sync::OnceCell<aws_config::SdkConfig> = once_cell::sync::OnceCell::new();
 static LOCK_REGIONS: once_cell::sync::OnceCell<String> = once_cell::sync::OnceCell::new();
+static ALARM_NAMES: once_cell::sync::OnceCell<String> = once_cell::sync::OnceCell::new();
 
 pub async fn init() {
     tracing_subscriber::fmt()
@@ -45,6 +48,8 @@ pub async fn init() {
     AWS_CONFIG.set(static_config).expect("could not save aws config");
     let static_lock_regions = std::env::var("LOCK_REGIONS").expect("LOCK_REGIONS not set");
     LOCK_REGIONS.set(static_lock_regions).expect("could not save lock regions");
+    let static_alarm_names = std::env::var("ALARM_NAMES").expect("ALARM_NAMES not set");
+    ALARM_NAMES.set(static_alarm_names).expect("could not save alarm names");
 }
 
 pub fn match_id<QueueItem: Identifiable>(players: &Vec<QueueItem>) -> String {
@@ -68,12 +73,7 @@ async fn run_wrapper<QueueItem: serde::de::DeserializeOwned + serde::Serialize +
     match run(p, execution_id).await {
         Ok(_) => Ok(()),
         Err(e) => {
-            // log error + record it in lock table
             println!("error: {:?}", e);
-            match p.client().record_error(execution_id, e).await {
-                Ok(_) => println!("recorded error"),
-                Err(re) => println!("failed to record error: {:?}", re)
-            };
             Err("failure")?
         }
     }
@@ -82,17 +82,16 @@ async fn run_wrapper<QueueItem: serde::de::DeserializeOwned + serde::Serialize +
 async fn run<QueueItem: serde::de::DeserializeOwned + serde::Serialize + Identifiable>(p: &dyn Processor<QueueItem>, execution_id: Ksuid) -> Result<(), Error> {
     let client = p.client();
 
-    // first, check if the region is reasonably healthy
+    // first, check if the region is healthy
     // if it is not, make no attempt to process the stream (assuming stream will be processed by other regions)
-    let lock_region_index = match client.check_health(execution_id).await {
-        Ok((healthy, index)) => {
+    match client.check_health().await {
+        Ok(healthy) => {
             if !healthy {
                 println!("region not healthy, abandoning stream");
-                // todo: consider custom error so that wrapper can distinguish this from an actual success
                 return Ok(())
             }
             println!("region is healthy");
-            index
+            ()
         }
         Err(e) => {
             println!("failed to check health");
@@ -100,9 +99,9 @@ async fn run<QueueItem: serde::de::DeserializeOwned + serde::Serialize + Identif
         }
     };
 
-    // next, obtain lock
-    let lock_obtained = match client.obtain_lock(execution_id, lock_region_index).await {
-        Ok(obtained) => obtained,
+    // next, obtain lock, making sure we maintain the index into the regional lock table list
+    let (lock_obtained, lock_region_index) = match client.obtain_lock(execution_id).await {
+        Ok((obtained, index)) => (obtained, index),
         Err(e) => {
             println!("failed to acquire lock");
             return Err(e);
@@ -201,7 +200,9 @@ impl<QueueItem: serde::de::DeserializeOwned + serde::Serialize + Identifiable> C
         let config = AWS_CONFIG.get().expect("No AWS config");
         let region = config.region().expect("No region in config");
         let dynamo_client = dynamodb::Client::new(&config);
+        let alarm_client = cloudwatch::Client::new(&config);
 
+        let alarms: Vec<String> = ALARM_NAMES.get().expect("No alarm names").split(",").map(str::to_string).collect();
         let lock_regions: Vec<String> = LOCK_REGIONS.get().expect("No lock regions").split(",").map(str::to_string).collect();
         let mut lock_clients: Vec<dynamodb::Client> = Vec::new();
         for region in lock_regions.clone() {
@@ -225,82 +226,70 @@ impl<QueueItem: serde::de::DeserializeOwned + serde::Serialize + Identifiable> C
             lock_regions,
             dynamo_client,
             lock_clients,
+            alarm_client,
+            alarms,
             queue_item_type: std::marker::PhantomData,
         })
     }
 
-    async fn check_health(&self, execution_id: Ksuid) -> Result<(bool, usize), Error> {
-        for (index, lock_client) in self.lock_clients.iter().enumerate() {
-            let region = self.lock_regions.iter().nth(index).expect("invalid region index");
-            let query_result = lock_client.query()
-                .table_name(&self.lock_table)
-                .select(dynamodb::model::Select::AllAttributes)
-                .limit(MAX_FAILURES)
-                .key_condition_expression("#process = :this AND begins_with(#sk, :error)")
-                .scan_index_forward(false)
-                .expression_attribute_names("#process", "process")
-                .expression_attribute_names("#sk", "sk")
-                .expression_attribute_values(":this", dynamodb::model::AttributeValue::S(format!("queue#{}#{}", self.queue_table, self.region)))
-                .expression_attribute_values(":error", dynamodb::model::AttributeValue::S("error#".to_string()))
-                .send().await;
+    async fn check_health(&self) -> Result<bool, Error> {
+        let status_result = self.alarm_client.describe_alarms()
+            .set_alarm_names(Some(self.alarms.clone()))
+            .state_value(cloudwatch::model::StateValue::Alarm)
+            .send().await?;
 
-            match query_result {
-                Ok(query_output) => {
-                    let all_recent_failures = match query_output.items {
-                        Some(items) => items.iter().all(|item| match item.get("timestamp") {
-                            Some(timestamp_av) => match timestamp_av {
-                                aws_sdk_dynamodb::model::AttributeValue::N(timestamp_str) => match timestamp_str.parse::<u64>() {
-                                    Ok(timestamp) => timestamp >= (execution_id.timestamp_seconds() - 300).try_into().unwrap(),
-                                    Err(_) => false
-                                }
-                                _ => false
-                            }
-                            None => false
-                        }),
-                        None => false
+        match status_result.metric_alarms() {
+            // we may have an active alarm
+            Some(alarms) => match alarms.len() > 0 {
+                // we do have an active alarm
+                true => {
+                    println!("There are active alarms");
+                    for alarm in alarms.iter() {
+                        println!("Active alarm: {:?}", alarm.alarm_name());
                     };
-
-                    if all_recent_failures && query_output.count >= MAX_FAILURES {
-                        println!("region has exceeded failure count");
-                        return Ok((false, index));
-                    }
-
-                    println!("failures have not exceeded thresholed");
-                    return Ok((true, index));
+                    Ok(false)
                 },
-                Err(e) => {
-                    println!("Failed to query {} - {:?}", region, e);
-                    continue
-                }
-            };
+                // we're good
+                false => Ok(true)
+            },
+            // no alarm currently active
+            None => Ok(true),
         }
-        Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, "all regions failed")))
     }
 
-    async fn obtain_lock(&self, execution_id: Ksuid, lock_region_index: usize) -> Result<bool, Error> {
-        let lock_client =  self.lock_clients.iter().nth(lock_region_index).expect("no matching lock client");
-        // todo: time values should be closely related to function timeout, maybe configurable via env var?
-        let put_result = lock_client.put_item()
-            .table_name(&self.lock_table)
-            .item("process", dynamodb::model::AttributeValue::S(format!("queue#{}", self.queue_table)))
-            .item("sk", dynamodb::model::AttributeValue::S("lock".to_string()))
-            .item("region", dynamodb::model::AttributeValue::S(self.region.clone()))
-            .item("ttl", dynamodb::model::AttributeValue::N((execution_id.timestamp_seconds() + 90).to_string()))
-            .condition_expression("attribute_not_exists(#ttl) or #ttl < :now_minus_timeout")
-            .expression_attribute_names("#ttl", "ttl")
-            .expression_attribute_values(":now_minus_timeout", dynamodb::model::AttributeValue::N((execution_id.timestamp_seconds() - 30).to_string()))
-            .send().await;
+    async fn obtain_lock(&self, execution_id: Ksuid) -> Result<(bool, usize), Error> {
+        for (index, lock_client) in self.lock_clients.iter().enumerate() {
+            let region = self.lock_regions.iter().nth(index).expect("invalid region index");
+            // todo: time values should be closely related to function timeout, maybe configurable via env var?
+            let put_result = lock_client.put_item()
+                .table_name(&self.lock_table)
+                .item("process", dynamodb::model::AttributeValue::S(format!("queue#{}", self.queue_table)))
+                .item("sk", dynamodb::model::AttributeValue::S("lock".to_string()))
+                .item("region", dynamodb::model::AttributeValue::S(self.region.clone()))
+                .item("ttl", dynamodb::model::AttributeValue::N((execution_id.timestamp_seconds() + 90).to_string()))
+                .condition_expression("attribute_not_exists(#ttl) or #ttl < :now_minus_timeout")
+                .expression_attribute_names("#ttl", "ttl")
+                .expression_attribute_values(":now_minus_timeout", dynamodb::model::AttributeValue::N((execution_id.timestamp_seconds() - 30).to_string()))
+                .send().await;
 
-        match put_result {
-            Ok(_) => Ok(true),
-            Err(error) => match error {
-                dynamodb::types::SdkError::ServiceError{err, raw: _} => match err.kind {
-                    dynamodb::error::PutItemErrorKind::ConditionalCheckFailedException(_) => Ok(false),
-                    _ => Err(Box::new(err))
+            match put_result {
+                Ok(_) => return Ok((true, index)),
+                Err(error) => match error {
+                    dynamodb::types::SdkError::ServiceError{err, raw: _} => match err.kind {
+                        dynamodb::error::PutItemErrorKind::ConditionalCheckFailedException(_) => return Ok((false, index)),
+                        _ => {
+                            println!("Put lock failed - {} - dynamo sdk error - {:?}", region, err);
+                            continue
+                        }
+                    }
+                    other_error => {
+                        println!("Put lock failed - {} - unknown error - {:?}", region, other_error);
+                        continue
+                    }
                 }
-                other_error => Err(Box::new(other_error))
             }
         }
+        Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, "all regions failed")))
     }
 
     async fn check_lock_held(&self, lock_region_index: usize) -> Result<bool, Error> {
@@ -397,29 +386,5 @@ impl<QueueItem: serde::de::DeserializeOwned + serde::Serialize + Identifiable> C
             Ok(_) => return Ok(id),
             Err(e) => Err(Box::new(e))
         }
-    }
-
-    async fn record_error(&self, execution_id: Ksuid, error: Error) -> Result<(), Error> {
-        for (index, lock_client) in self.lock_clients.iter().enumerate() {
-            let region = self.lock_regions.iter().nth(index).expect("invalid region index");
-            let put_item_result = lock_client.put_item()
-                .table_name(&self.lock_table)
-                .item("process", dynamodb::model::AttributeValue::S(format!("queue#{}#{}", self.queue_table, self.region)))
-                .item("sk", dynamodb::model::AttributeValue::S(format!("error#{}", execution_id.to_base62())))
-                .item("region", dynamodb::model::AttributeValue::S(self.region.clone()))
-                .item("timestamp", dynamodb::model::AttributeValue::N(execution_id.timestamp_seconds().to_string()))
-                .item("ttl", dynamodb::model::AttributeValue::N((execution_id.timestamp_seconds() + 3600).to_string()))
-                .item("error", dynamodb::model::AttributeValue::S(format!("{:?}", error)))
-                .send().await;
-
-            match put_item_result {
-                Ok(_) => return Ok(()),
-                Err(e) => {
-                    println!("failed to record error in {} - {:?}", region, e);
-                    continue
-                }
-            };
-        }
-        Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, "all regions failed")))
     }
 }

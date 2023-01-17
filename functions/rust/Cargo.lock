@@ -151,6 +151,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "aws-sdk-cloudwatch"
+version = "0.19.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f7485c9118c9793603baf8b3242da6da9381c319acbc0963b3c3eabc0949592c"
+dependencies = [
+ "aws-endpoint",
+ "aws-http",
+ "aws-sig-auth",
+ "aws-smithy-async",
+ "aws-smithy-client",
+ "aws-smithy-http",
+ "aws-smithy-http-tower",
+ "aws-smithy-query",
+ "aws-smithy-types",
+ "aws-smithy-xml",
+ "aws-types",
+ "bytes",
+ "http",
+ "tokio-stream",
+ "tower",
+]
+
+[[package]]
 name = "aws-sdk-dynamodb"
 version = "0.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1283,6 +1306,7 @@ dependencies = [
  "appsync",
  "async-trait",
  "aws-config",
+ "aws-sdk-cloudwatch",
  "aws-sdk-dynamodb",
  "aws-sdk-secretsmanager",
  "aws-types",
@@ -1389,6 +1413,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "aws-config",
+ "aws-sdk-cloudwatch",
  "aws-sdk-dynamodb",
  "aws-types",
  "aws_lambda_events",

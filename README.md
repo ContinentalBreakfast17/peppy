@@ -12,9 +12,13 @@ There are a handful of lambda functions that support this, all of which are writ
 I knew 0 Rust going into this so I'm sure the code can use many improvements.
 
 todo:
-- route53 healthcheck (alarm in place)
-- queue heartbeat
+- vtl tests in rust
+- dolphin build
+- queue removal mechanisms
+- invalidate subscriptions on region failure (read through queue, remove + invalidate each player)
 - filter out recent matches
+- queue heartbeat (?)
 - process game results
-- rust unit tests
+- lock table healthcheck
 - integration tests
+- rust unit tests

@@ -45,6 +45,7 @@ type MatchMakeConfig struct {
 	MatchTables    map[string]common.ArnIdPair
 	LockTables     map[string]common.ArnIdPair
 	LockRegions    []string
+	AlarmIds       map[string]common.ArnIdPair
 }
 
 type queueConfig struct {
@@ -214,6 +215,7 @@ func (cfg queueConfig) lambdaRole(ctx common.TfContext) IamRole {
 
 	lockTables := common.ArnsToList(cfg.LockTables)
 	matchTables := common.ArnsToList(cfg.MatchTables)
+	alarmArns := common.ArnsToList(cfg.AlarmIds)
 
 	NewIamRolePolicy(ctx.Scope, jsii.String(ctx.Id+"_tables_policy"), &IamRolePolicyConfig{
 		Provider: ctx.Provider,
@@ -230,6 +232,11 @@ func (cfg queueConfig) lambdaRole(ctx common.TfContext) IamRole {
 					Effect:    jsii.String("Allow"),
 					Actions:   jsii.Strings("dynamodb:GetItem", "dynamodb:PutItem"),
 					Resources: &matchTables,
+				},
+				{
+					Effect:    jsii.String("Allow"),
+					Actions:   jsii.Strings("cloudwatch:DescribeAlarms"),
+					Resources: &alarmArns,
 				},
 			},
 		}).Json(),
@@ -256,12 +263,18 @@ func (cfg instanceConfig) new(ctx common.TfContext) queueInstance {
 		Key:      cfg.Code.ToKey(cfg.codeLocation),
 	})
 
+	alarmNames := []string{}
+	for _, alarm := range cfg.AlarmIds {
+		alarmNames = append(alarmNames, *alarm.Id())
+	}
+
 	lambdaEnv := map[string]*string{
 		"QUEUE_TABLE":  table.Id(),
 		"QUEUE_INDEX":  jsii.String(queue_sort),
 		"MATCH_TABLE":  cfg.MatchTables[cfg.region].Id,
 		"LOCK_TABLE":   cfg.LockTables[cfg.region].Id,
 		"LOCK_REGIONS": jsii.String(strings.Join(cfg.LockRegions, ",")),
+		"ALARM_NAMES":  jsii.String(strings.Join(alarmNames, ",")),
 	}
 
 	lambdaDependsOn := []cdktf.ITerraformDependable{

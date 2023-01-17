@@ -97,18 +97,6 @@ func (cfg stackConfig) addTo(app cdktf.App) {
 		ApiUrl:        cfg.Vars.Domain.RegionalUrlTemplate(),
 	}.New(SimpleContext(stack, "match_publish", base.Providers.Main))
 
-	matchMake := MatchMakeConfig{
-		Providers:      allProviders,
-		Name:           jsii.String(cfg.Vars.Name + "-match-make"),
-		LambdaIam:      lambdaIam,
-		Code:           codeObjectConfig,
-		KmsWritePolicy: base.Policies.KmsMain.Write.Arn(),
-		KmsArns:        base.KmsMain.Arns(),
-		MatchTables:    matchPublish.TableIds(),
-		LockTables:     lockTable.TableIds(),
-		LockRegions:    cfg.Vars.OrderedRegions(),
-	}.New(SimpleContext(stack, "match_make", base.Providers.Main))
-
 	healthcheck := HealthcheckConfig{
 		Providers:      allProviders,
 		Name:           jsii.String(cfg.Vars.Name + "-healthcheck"),
@@ -120,6 +108,19 @@ func (cfg stackConfig) addTo(app cdktf.App) {
 		ApiUrl:         cfg.Vars.Domain.RegionalUrlTemplate(),
 		SendAlarmsTo:   cfg.Vars.Alarms.SendTo,
 	}.New(SimpleContext(stack, "healthcheck", base.Providers.Main))
+
+	matchMake := MatchMakeConfig{
+		Providers:      allProviders,
+		Name:           jsii.String(cfg.Vars.Name + "-match-make"),
+		LambdaIam:      lambdaIam,
+		Code:           codeObjectConfig,
+		KmsWritePolicy: base.Policies.KmsMain.Write.Arn(),
+		KmsArns:        base.KmsMain.Arns(),
+		MatchTables:    matchPublish.TableIds(),
+		LockTables:     lockTable.TableIds(),
+		LockRegions:    cfg.Vars.OrderedRegions(),
+		AlarmIds:       healthcheck.Alarm.AlarmIds(),
+	}.New(SimpleContext(stack, "match_make", base.Providers.Main))
 
 	api := ApiConfig{
 		Providers:         allProviders,
