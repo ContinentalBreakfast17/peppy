@@ -19,6 +19,7 @@ todo:
 - filter out recent matches
 - queue heartbeat (?)
 - process game results
-- lock table healthcheck
+- lock table healthcheck (i.e. us-east-1 table is good but us-west-1 thinks it's down--leads to race condition)
+- logging/metrics
 - integration tests
 - rust unit tests

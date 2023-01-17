@@ -265,7 +265,7 @@ func (cfg instanceConfig) new(ctx common.TfContext) queueInstance {
 
 	alarmNames := []string{}
 	for _, alarm := range cfg.AlarmIds {
-		alarmNames = append(alarmNames, *alarm.Id())
+		alarmNames = append(alarmNames, *alarm.Id)
 	}
 
 	lambdaEnv := map[string]*string{
