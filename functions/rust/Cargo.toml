@@ -28,8 +28,9 @@ path = "src/bin/process-queue/unranked-solo.rs"
 
 [package.metadata.lambda.env]
 RUST_LOG = "warn"
-LOCK_REGIONS = "us-east-1,us-east-2"
+LOCK_REGIONS = "us-east-1,us-west-1"
 LOCK_TABLE = "slippi-api-process-lock"
+ALARM_NAMES= "slippi-api-healthcheck-alarm-system-down"
 
 [package.metadata.lambda.bin.healthcheck.env]
 API_URL = "wss://us-east-1.slippi.yeezyfan.club/graphql"
@@ -46,14 +47,15 @@ API_URL = "https://us-east-1.slippi.yeezyfan.club/graphql"
 
 [package.metadata.lambda.bin.process-queue-unranked-solo.env]
 QUEUE_INDEX = "queue_sort"
-QUEUE_TABLE = "slippi-api-queue-unranked-solo"
-MATCH_TABLE = "slippi-api-matches-unranked-solo"
+QUEUE_TABLE = "slippi-api-match-make-unranked-solo-queue"
+MATCH_TABLE = "slippi-api-match-publish"
 
 [dependencies]
 appsync = { path = "pkg/appsync" }
 async-trait = "0.1.57"
 aws-config = "0.49.0"
 aws_lambda_events = { version = "0.7", default-features = false, features = ["cloudwatch_events", "dynamodb"] }
+aws-sdk-cloudwatch = "0.19.0"
 aws-sdk-dynamodb = "0.19.0"
 aws-sdk-secretsmanager = "0.19.0"
 aws-types = "0.49.0"
