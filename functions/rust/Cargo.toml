@@ -7,6 +7,10 @@ edition = "2021"
 members = ["pkg/*"]
 
 [[bin]]
+name = "authorizer"
+path = "src/bin/authorizer/main.rs"
+
+[[bin]]
 name = "healthcheck"
 path = "src/bin/healthcheck/main.rs"
 
@@ -32,6 +36,10 @@ LOCK_REGIONS = "us-east-1,us-west-1"
 LOCK_TABLE = "slippi-api-process-lock"
 ALARM_NAMES= "slippi-api-healthcheck-alarm-system-down"
 
+[package.metadata.lambda.bin.authorizer.env]
+TABLE = "slippi-api-users"
+INDEX = "auth_sort"
+
 [package.metadata.lambda.bin.healthcheck.env]
 API_URL = "wss://us-east-1.slippi.yeezyfan.club/graphql"
 TABLE = "slippi-api-healthcheck"
@@ -54,7 +62,7 @@ MATCH_TABLE = "slippi-api-match-publish"
 appsync = { path = "pkg/appsync" }
 async-trait = "0.1.57"
 aws-config = "0.49.0"
-aws_lambda_events = { version = "0.7", default-features = false, features = ["cloudwatch_events", "dynamodb"] }
+aws_lambda_events = { version = "0.7", default-features = false, features = ["appsync", "cloudwatch_events", "dynamodb"] }
 aws-sdk-cloudwatch = "0.19.0"
 aws-sdk-dynamodb = "0.19.0"
 aws-sdk-secretsmanager = "0.19.0"

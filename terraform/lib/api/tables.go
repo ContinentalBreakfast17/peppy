@@ -29,6 +29,8 @@ type tablesInstanceConfig struct {
 	user    *string
 }
 
+const auth_sort = "auth_sort"
+
 func (cfg apiTablesConfig) new(ctx common.TfContext) apiTables {
 	// create tables w/ replicas in each region
 	tableReplicas := []DynamodbTableReplica{}
@@ -82,9 +84,20 @@ func (cfg apiTablesConfig) new(ctx common.TfContext) apiTables {
 			Enabled:       jsii.Bool(true),
 			AttributeName: jsii.String("ttl"),
 		},
+		GlobalSecondaryIndex: &[]DynamodbTableGlobalSecondaryIndex{
+			{
+				Name:             jsii.String(auth_sort),
+				HashKey:          jsii.String("playKey"),
+				ProjectionType:   jsii.String("ALL"),
+			},
+		},
 		Attribute: &[]DynamodbTableAttribute{
 			{
 				Name: jsii.String("user"),
+				Type: jsii.String("S"),
+			},
+			{
+				Name: jsii.String("playKey"),
 				Type: jsii.String("S"),
 			},
 		},

@@ -1,0 +1,11 @@
+{
+  "authorizationToken": "bad",
+  "requestContext": {
+    "apiId": "1234",
+    "accountId": "5678",
+    "requestId": "90",
+    "queryString": "query{ region }",
+    "operationName": "",
+    "variables": {}
+  }
+}
