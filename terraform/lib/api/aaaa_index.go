@@ -67,7 +67,6 @@ func (cfg ApiConfig) New(ctx common.TfContext) api {
 		kmsWritePolicy:      cfg.KmsWritePolicy,
 		queues:              cfg.Queues.toList(),
 		functionsIpLookup:   cfg.FunctionsIpLookup,
-		functionsAuthorizer: authorizer.functionIds(),
 		tablesHealthcheck:   cfg.TablesHealthcheck,
 		tablesUser:          tables.userTableIds(),
 		tablesIpCache:       tables.ipCacheTableIds(),

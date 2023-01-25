@@ -8,6 +8,7 @@ import (
 	. "github.com/cdktf/cdktf-provider-aws-go/aws/v10/appsyncdomainname"
 	. "github.com/cdktf/cdktf-provider-aws-go/aws/v10/appsyncdomainnameapiassociation"
 	. "github.com/cdktf/cdktf-provider-aws-go/aws/v10/appsyncgraphqlapi"
+	. "github.com/cdktf/cdktf-provider-aws-go/aws/v10/lambdapermission"
 	. "github.com/cdktf/cdktf-provider-aws-go/aws/v10/route53healthcheck"
 	. "github.com/cdktf/cdktf-provider-aws-go/aws/v10/route53record"
 	"github.com/hashicorp/terraform-cdk-go/cdktf"
@@ -91,6 +92,15 @@ func (cfg appsyncApiInstanceConfig) new(ctx common.TfContext) appsyncApiInstance
 			CloudwatchLogsRoleArn: cfg.role,
 			FieldLogLevel:         jsii.String("ALL"),
 		},
+	})
+
+	NewLambdaPermission(ctx.Scope, jsii.String(ctx.Id+"_lambda_perm"), &LambdaPermissionConfig{
+		Provider:     ctx.Provider,
+		StatementId:  jsii.String("AllowExecutionFromAppsync"),
+		Action:       jsii.String("lambda:InvokeFunction"),
+		FunctionName: cfg.functionsAuthorizer[cfg.region].Arn,
+		Principal:    jsii.String("appsync.amazonaws.com"),
+		SourceArn:    api.Arn(),
 	})
 
 	domainName := NewAppsyncDomainName(ctx.Scope, jsii.String(ctx.Id+"_domain"), &AppsyncDomainNameConfig{

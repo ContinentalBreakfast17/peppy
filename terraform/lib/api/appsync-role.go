@@ -20,7 +20,6 @@ type appsyncRoleConfig struct {
 	kmsWritePolicy      *string
 	queues              []queue
 	functionsIpLookup   map[string]common.ArnIdPair
-	functionsAuthorizer map[string]common.ArnIdPair
 	tablesHealthcheck   map[string]common.ArnIdPair
 	tablesUser          map[string]common.ArnIdPair
 	tablesIpCache       map[string]common.ArnIdPair
@@ -55,7 +54,6 @@ func (cfg appsyncRoleConfig) new(ctx common.TfContext) appsyncRole {
 	})
 
 	lambdaArns := common.ArnsToList(cfg.functionsIpLookup)
-	lambdaArns = append(lambdaArns, common.ArnsToList(cfg.functionsAuthorizer)...)
 	tableArns := common.ArnsToList(cfg.tablesHealthcheck)
 	tableArns = append(tableArns, common.ArnsToList(cfg.tablesUser)...)
 	tableArns = append(tableArns, common.ArnsToList(cfg.tablesIpCache)...)
