@@ -27,6 +27,7 @@ impl Client {
     }
 
     async fn run(&self, event: LambdaEvent<AppSyncLambdaAuthorizerRequest>) -> Result<AppSyncLambdaAuthorizerResponse<User>,  Box<dyn std::error::Error + Send + Sync>> {
+        println!("{:?}", event.payload.request_context);
         match self.is_authorized(event).await {
             Ok(resp) => match resp {
                 // todo: should probably log something here
