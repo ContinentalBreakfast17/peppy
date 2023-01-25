@@ -67,14 +67,6 @@ jobs:
           mode: plan-only
           commentOnPr: false
 
-      - name: Archive Plan
-        uses: actions/upload-artifact@v3
-        with:
-          name: tf-plan
-          retention-days: 1
-          path: |
-            "terraform/cdktf.out/stacks/${{ github.event.inputs.environment || 'dev' }}/plan"
-
       - name: Deploy
         if: github.event_name == 'workflow_call' || format('{0}', github.event.inputs.deploy) == 'true'
         uses: hashicorp/terraform-cdk-action@v0.1.0

@@ -13,10 +13,8 @@ struct Client {
 
 #[derive(Clone, Deserialize, Serialize)]
 struct User {
-    user:     String,
-    name:     String,
-    #[serde(rename="playKey")]
-    play_key: String,
+    user: String,
+    name: String,
 }
 
 impl Client {
@@ -67,6 +65,7 @@ impl Client {
                     Ok(parsed_users) => {
                         if parsed_users.len() == 0 {
                             // no matching users
+                            println!("no matching users");
                             Ok(None)
                         } else if parsed_users.len() > 1 {
                             // more than 1 matching user
@@ -75,6 +74,7 @@ impl Client {
                             Ok(Some(parsed_users[0].clone()))
                         } else {
                             // exactly one matching user (what we expect)
+                            println!("found user");
                             Ok(Some(parsed_users[0].clone()))
                         }
                     },
