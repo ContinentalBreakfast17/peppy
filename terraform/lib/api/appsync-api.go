@@ -37,20 +37,21 @@ type appsyncQueueDataSources struct {
 }
 
 type appsyncApiConfig struct {
-	providers         common.Providers
-	name              *string
-	schema            string
-	domainName        *string
-	hostedZone        *string
-	cert              *string
-	certValidation    AcmCertificateValidation
-	role              *string
-	queues            ApiQueueConfig
-	functionsIpLookup map[string]common.ArnIdPair
-	tablesHealthcheck map[string]common.ArnIdPair
-	tablesUser        map[string]common.ArnIdPair
-	tablesIpCache     map[string]common.ArnIdPair
-	alarmsHealthCheck map[string]common.ArnIdPair
+	providers           common.Providers
+	name                *string
+	schema              string
+	domainName          *string
+	hostedZone          *string
+	cert                *string
+	certValidation      AcmCertificateValidation
+	role                *string
+	queues              ApiQueueConfig
+	functionsIpLookup   map[string]common.ArnIdPair
+	functionsAuthorizer map[string]common.ArnIdPair
+	tablesHealthcheck   map[string]common.ArnIdPair
+	tablesUser          map[string]common.ArnIdPair
+	tablesIpCache       map[string]common.ArnIdPair
+	alarmsHealthCheck   map[string]common.ArnIdPair
 }
 
 type appsyncApiInstanceConfig struct {
@@ -76,7 +77,16 @@ func (cfg appsyncApiInstanceConfig) new(ctx common.TfContext) appsyncApiInstance
 		Provider:           ctx.Provider,
 		Name:               cfg.name,
 		Schema:             jsii.String(cfg.schema),
-		AuthenticationType: jsii.String("AWS_IAM"), // note: this needs to change at some point
+		AuthenticationType: jsii.String("AWS_IAM"),
+		AdditionalAuthenticationProvider: &[]AppsyncGraphqlApiAdditionalAuthenticationProvider{
+			{
+				AuthenticationType: jsii.String("AWS_LAMBDA"),
+				LambdaAuthorizerConfig: &AppsyncGraphqlApiAdditionalAuthenticationProviderLambdaAuthorizerConfig{
+					AuthorizerUri:                cfg.functionsAuthorizer[cfg.region].Arn,
+					AuthorizerResultTtlInSeconds: jsii.Number(60),
+				},
+			},
+		},
 		LogConfig: &AppsyncGraphqlApiLogConfig{
 			CloudwatchLogsRoleArn: cfg.role,
 			FieldLogLevel:         jsii.String("ALL"),

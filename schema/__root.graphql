@@ -4,41 +4,41 @@ schema {
   subscription: Subscription
 }
 
-type Query {
+type Query @aws_iam {
   region: String!
 }
 
-type Mutation {
-  publishHealth(id: ID!): HealthNotification @aws_iam
-  publishMatch(queue: String!, sessionId: ID!, players: [PlayerInput!]!): QueueNotification @aws_iam
+type Mutation @aws_iam {
+  publishHealth(id: ID!): HealthNotification
+  publishMatch(queue: String!, sessionId: ID!, players: [PlayerInput!]!): QueueNotification
 }
 
-type Subscription {
+type Subscription @aws_iam @aws_lambda {
   healthcheck(id: ID!): HealthNotification @aws_iam @aws_subscribe(mutations: ["publishHealth"])
   joinUnrankedSoloQueue(userId: String!): QueueNotification @aws_subscribe(mutations: ["publishMatch"])
 }
 
-type HealthNotification {
-  id: ID! @aws_iam
+type HealthNotification @aws_iam @aws_lambda {
+  id: ID!
 }
 
 union QueueNotification = Match | Heartbeat
 
-type Heartbeat {
-  timestamp: String! @aws_iam
+type Heartbeat @aws_iam @aws_lambda {
+  timestamp: String!
 }
 
-type Match {
-  sessionId: ID! @aws_iam
-  queue: String! @aws_iam
-  playerIds: [String!]! @aws_iam
-  players: [Player!]! @aws_iam
+type Match @aws_iam @aws_lambda {
+  sessionId: ID!
+  queue: String!
+  playerIds: [String!]!
+  players: [Player!]!
 }
 
-type Player {
-  userId: String! @aws_iam
+type Player @aws_iam @aws_lambda {
+  userId: String!
   # username: String!
-  ip: AWSIPAddress! @aws_iam
+  ip: AWSIPAddress!
 }
 
 input PlayerInput {

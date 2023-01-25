@@ -86,9 +86,9 @@ func (cfg apiTablesConfig) new(ctx common.TfContext) apiTables {
 		},
 		GlobalSecondaryIndex: &[]DynamodbTableGlobalSecondaryIndex{
 			{
-				Name:             jsii.String(auth_sort),
-				HashKey:          jsii.String("playKey"),
-				ProjectionType:   jsii.String("ALL"),
+				Name:           jsii.String(auth_sort),
+				HashKey:        jsii.String("playKey"),
+				ProjectionType: jsii.String("ALL"),
 			},
 		},
 		Attribute: &[]DynamodbTableAttribute{
