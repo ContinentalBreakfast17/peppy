@@ -26,7 +26,7 @@ impl Client {
         Ok(Self { dynamo_client, table, index })
     }
 
-    async fn run(&self, event: LambdaEvent<AppSyncLambdaAuthorizerRequest>) -> Result<AppSyncLambdaAuthorizerResponse<User>,  Box<dyn std::error::Error + Send + Sync>> {
+    async fn run(&self, event: LambdaEvent<AppSyncLambdaAuthorizerRequest>) -> Result<AppSyncLambdaAuthorizerResponse<String>,  Box<dyn std::error::Error + Send + Sync>> {
         println!("{:?}", event.payload.request_context);
         match self.is_authorized(event).await {
             Ok(resp) => match resp {
@@ -93,10 +93,13 @@ impl Client {
         }
     }
 
-    fn authorized_response(&self, user: User) -> AppSyncLambdaAuthorizerResponse<User> {
+    fn authorized_response(&self, user: User) -> AppSyncLambdaAuthorizerResponse<String> {
         AppSyncLambdaAuthorizerResponse{
             is_authorized: true,
-            resolver_context: HashMap::from([("user".to_string(), user)]),
+            resolver_context: HashMap::from([
+                ("user".to_string(), user.user),
+                ("name".to_string(), user.name),
+            ]),
             // you apparently _must_ specify this...
             ttl_override: Some(60),
             // could use this to deny ranked
@@ -104,7 +107,7 @@ impl Client {
         }
     }
 
-    fn unauthorized_response(&self) -> AppSyncLambdaAuthorizerResponse<User> {
+    fn unauthorized_response(&self) -> AppSyncLambdaAuthorizerResponse<String> {
         AppSyncLambdaAuthorizerResponse{
             is_authorized: false,
             resolver_context: HashMap::from([]),
