@@ -22,7 +22,7 @@ type HealthNotification @aws_iam @aws_lambda {
   id: ID!
 }
 
-union QueueNotification = Match | Heartbeat
+union QueueNotification @aws_iam @aws_lambda = Match | Heartbeat
 
 type Heartbeat @aws_iam @aws_lambda {
   timestamp: String!

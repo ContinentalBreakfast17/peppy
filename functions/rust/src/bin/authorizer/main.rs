@@ -97,7 +97,8 @@ impl Client {
         AppSyncLambdaAuthorizerResponse{
             is_authorized: true,
             resolver_context: HashMap::from([("user".to_string(), user)]),
-            ttl_override: None,
+            // you apparently _must_ specify this...
+            ttl_override: Some(60),
             // could use this to deny ranked
             denied_fields: None,
         }
@@ -107,7 +108,7 @@ impl Client {
         AppSyncLambdaAuthorizerResponse{
             is_authorized: false,
             resolver_context: HashMap::from([]),
-            ttl_override: None,
+            ttl_override: Some(60),
             denied_fields: None,
         }
     }
