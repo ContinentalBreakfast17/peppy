@@ -1,0 +1,21 @@
+## parse user details
+$util.log.info($util.toJson($ctx.identity))
+#if($util.authType() == "IAM Authorization")
+  $util.quiet($ctx.stash.put("user", {
+    "id": $ctx.identity.userArn,
+    "name": $ctx.identity.username
+  }))
+  #if (!$util.isNull($ctx.stash.mmrKey))
+    $util.quiet($ctx.stash.put("mmr", $util.defaultIfNull($ctx.request.headers.get($ctx.stash.mmrKey), 1500)))
+  #else
+    $util.quiet($ctx.stash.put("mmr", 1500))
+  #end
+#else
+  $util.quiet($ctx.stash.put("user", $ctx.identity.resolverContext))
+  #if (!$util.isNull($ctx.stash.mmrKey))
+    $util.quiet($ctx.stash.put("mmr", $util.defaultIfNull($ctx.identity.resolverContext.get($ctx.stash.mmrKey), 1500)))
+  #else
+    ## fallback just in case
+    $util.quiet($ctx.stash.put("mmr", 1500))
+  #end
+#end

@@ -2,7 +2,7 @@
 
 #if ($util.isNull($ctx.result) || $ctx.error)
   $util.log.error({
-    "user": $ctx.stash.user,
+    "user": $ctx.stash.user.id,
     "function": $function,
     "code": "Failure",
     "error": $ctx.error

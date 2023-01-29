@@ -10,7 +10,9 @@ tests:
         dequeue_tables:
           - dq_table1
           - dq_table2
-        user: abc#123
+        user:
+          id: abc#123
+          name: abc
         location:
           longitude: -10
           latitude: 10
@@ -44,6 +46,12 @@ tests:
                 N: 10
               longitude:
                 N: -10
+          userInfo:
+            M:
+              id:
+                S: abc#123
+              name:
+                S: abc
           mmr:
             N: 1800
           ttl:
@@ -61,7 +69,9 @@ tests:
         region: us-east-1
         ip: "1.2.3.4"
         queue_table: q_table
-        user: abc#123
+        user:
+          id: abc#123
+          name: def
         location:
           longitude: -10
           latitude: 10
@@ -85,6 +95,12 @@ tests:
                 N: 10
               longitude:
                 N: -10
+          userInfo:
+            M:
+              id:
+                S: abc#123
+              name:
+                S: def
           mmr:
             N: 1800
           ttl:
@@ -101,7 +117,9 @@ tests:
     file: &resp-file enqueue.resp.vm
     context:
       stash:
-        user: abc#123
+        user:
+          id: abc#123
+          name: ayo
         queue: unranked
       result: {}
     expect: {}

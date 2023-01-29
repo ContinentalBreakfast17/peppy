@@ -41,9 +41,18 @@ struct Player {
     #[serde(alias="user")]
     #[serde(rename = "userId")]
     user_id: String,
+    #[serde(alias="userInfo")]
+    #[serde(rename="info")]
+    user_info: PlayerInfo,
     ip: String,
     #[serde(skip_serializing)]
     region: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct PlayerInfo {
+    #[serde(default)]
+    name: String,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -72,6 +81,9 @@ mutation ($queue: String!, $sessionId: ID!, $players: [PlayerInput!]!){
             players {
                 userId
                 ip
+                info {
+                    name
+                }
             }
         }
     }

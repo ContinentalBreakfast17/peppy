@@ -7,6 +7,8 @@ use serde::{Serialize, Deserialize};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct QueueItem {
     user: String,
+    #[serde(rename = "userInfo")]
+    user_info: UserInfo,
     ip: String,
     region: String,
     mmr: i64,
@@ -21,6 +23,11 @@ struct QueueItem {
 struct Coordinates {
     latitude: f64,
     longitude: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct UserInfo {
+    name: String,
 }
 
 impl queue_processor::Identifiable for QueueItem {

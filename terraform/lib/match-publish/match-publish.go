@@ -128,6 +128,8 @@ func (app matchPublish) AddApiPerms(ctx common.TfContext, arns []*string) {
 			jsii.String(*arn + "/types/Mutation/fields/publishMatch"),
 			jsii.String(*arn + "/types/Match/fields/*"),
 			jsii.String(*arn + "/types/Player/fields/*"),
+			jsii.String(*arn + "/types/PlayerInfo/fields/*"),
+			jsii.String(*arn + "/types/PlayerConfig/fields/*"),
 		}...)
 	}
 

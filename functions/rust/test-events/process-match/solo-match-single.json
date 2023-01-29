@@ -29,6 +29,13 @@
                   },
                   "user": {
                     "S": "aws#521"
+                  },
+                  "userInfo": {
+                    "M": {
+                      "name": {
+                        "S": "DynamoDB"
+                      }
+                    }
                   }
                 }
               },
@@ -42,6 +49,13 @@
                   },
                   "user": {
                     "S": "goku#557"
+                  },
+                  "userInfo": {
+                    "M": {
+                      "name": {
+                        "S": "Mike Tyson"
+                      }
+                    }
                   }
                 }
               }

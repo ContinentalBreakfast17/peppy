@@ -3,7 +3,7 @@
 #if ($ctx.result)
   ## ip found in cache
   $util.log.info({
-    "user": $ctx.stash.user,
+    "user": $ctx.stash.user.id,
     "function": $function,
     "code": "Hit"
   })
@@ -13,7 +13,7 @@
 #elseif ($ctx.error)
   ## failed to check cache
   $util.log.error({
-    "user": $ctx.stash.user,
+    "user": $ctx.stash.user.id,
     "function": $function,
     "code": "Failure",
     "error": $ctx.error
@@ -22,7 +22,7 @@
 #else
   ## ip not in cache
   $util.log.info({
-    "user": $ctx.stash.user,
+    "user": $ctx.stash.user.id,
     "function": $function,
     "code": "Miss"
   })

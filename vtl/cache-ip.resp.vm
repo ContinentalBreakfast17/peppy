@@ -2,7 +2,7 @@
 
 #if ($util.isNull($ctx.result))
   $util.log.error({
-    "user": $ctx.stash.user,
+    "user": $ctx.stash.user.id,
     "function": $function,
     "code": "Failure",
     "error": $ctx.error
@@ -10,7 +10,7 @@
   #return ($util.toJson($ctx.stash.location))
 #else
   $util.log.info({
-    "user": $ctx.stash.user,
+    "user": $ctx.stash.user.id,
     "function": $function,
     "code": "Success"
   })

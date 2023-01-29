@@ -15,14 +15,14 @@ type appsyncRole struct {
 }
 
 type appsyncRoleConfig struct {
-	name                *string
-	path                *string
-	kmsWritePolicy      *string
-	queues              []queue
-	functionsIpLookup   map[string]common.ArnIdPair
-	tablesHealthcheck   map[string]common.ArnIdPair
-	tablesUser          map[string]common.ArnIdPair
-	tablesIpCache       map[string]common.ArnIdPair
+	name              *string
+	path              *string
+	kmsWritePolicy    *string
+	queues            []queue
+	functionsIpLookup map[string]common.ArnIdPair
+	tablesHealthcheck map[string]common.ArnIdPair
+	tablesUser        map[string]common.ArnIdPair
+	tablesIpCache     map[string]common.ArnIdPair
 }
 
 func (cfg appsyncRoleConfig) new(ctx common.TfContext) appsyncRole {

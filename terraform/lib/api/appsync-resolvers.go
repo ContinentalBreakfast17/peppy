@@ -54,6 +54,7 @@ func (cfg appsyncResolversInstanceConfig) new(ctx common.TfContext) appsyncResol
 	requestTemplate := `$util.quiet($ctx.stash.put("entry_time", $util.time.nowEpochSeconds()))` + "\n"
 	requestTemplate += `$util.quiet($ctx.stash.put("graphql", $ctx.info))` + "\n"
 	requestTemplate += fmt.Sprintf(`$util.quiet($ctx.stash.put("region", "%s"))`, cfg.region) + "\n"
+	requestTemplate += *cfg.vtl["_global.req.vm"] + "\n"
 	requestTemplate += `{}`
 
 	return appsyncResolversInstance{
@@ -121,7 +122,6 @@ func (cfg appsyncResolversInstanceConfig) new(ctx common.TfContext) appsyncResol
 			Type:     jsii.String("Subscription"),
 			Field:    jsii.String("joinUnrankedSoloQueue"),
 			RequestTemplate: jsii.String(strings.Join([]string{
-				`$util.quiet($ctx.stash.put("user", $ctx.args.userId))`,
 				`$util.quiet($ctx.stash.put("mmrKey", "unrankedSolo"))`,
 				// todo: consider removing dequeue entirely (no transaction, saves lot of cost)
 				`$util.quiet($ctx.stash.put("dequeue_tables", []))`,
@@ -134,7 +134,6 @@ func (cfg appsyncResolversInstanceConfig) new(ctx common.TfContext) appsyncResol
 					*cfg.fns.CheckIpCache.FunctionId(),
 					*cfg.fns.LookupIp.FunctionId(),
 					*cfg.fns.CacheIp.FunctionId(),
-					*cfg.fns.GetUser.FunctionId(),
 					*cfg.fns.EnqueueUnrankedSolo.FunctionId(),
 				),
 			},

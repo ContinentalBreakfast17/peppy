@@ -14,7 +14,6 @@ type appsyncFunctionsInstance struct {
 	CacheIp             AppsyncFunction
 	CheckIpCache        AppsyncFunction
 	EnqueueUnrankedSolo AppsyncFunction
-	GetUser             AppsyncFunction
 	HealthResponse      AppsyncFunction
 	LookupIp            AppsyncFunction
 	PostHealthcheck     AppsyncFunction
@@ -72,14 +71,6 @@ func (cfg appsyncFunctionsInstanceConfig) new(ctx common.TfContext) appsyncFunct
 			DataSource:              cfg.api.DataSources.Queues.UnrankedSolo.Name(),
 			RequestMappingTemplate:  cfg.vtl["enqueue.req.vm"],
 			ResponseMappingTemplate: cfg.vtl["enqueue.resp.vm"],
-		}),
-		GetUser: NewAppsyncFunction(ctx.Scope, jsii.String(ctx.Id+"_get_user"), &AppsyncFunctionConfig{
-			Provider:                ctx.Provider,
-			Name:                    jsii.String("cache_ip"),
-			ApiId:                   cfg.api.Api.Id(),
-			DataSource:              cfg.api.DataSources.User.Name(),
-			RequestMappingTemplate:  cfg.vtl["get-user.req.vm"],
-			ResponseMappingTemplate: cfg.vtl["get-user.resp.vm"],
 		}),
 		HealthResponse: NewAppsyncFunction(ctx.Scope, jsii.String(ctx.Id+"_health_response"), &AppsyncFunctionConfig{
 			Provider:                ctx.Provider,

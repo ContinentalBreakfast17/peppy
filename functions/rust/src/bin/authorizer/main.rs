@@ -97,7 +97,7 @@ impl Client {
         AppSyncLambdaAuthorizerResponse{
             is_authorized: true,
             resolver_context: HashMap::from([
-                ("user".to_string(), user.user),
+                ("id".to_string(), user.user),
                 ("name".to_string(), user.name),
             ]),
             // you apparently _must_ specify this...

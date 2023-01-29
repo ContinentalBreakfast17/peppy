@@ -1,5 +1,5 @@
 subscription {
-  joinUnrankedSoloQueue(userId: "aws#521") {
+  joinUnrankedSoloQueue(userInfo: {}) {
     __typename
     ... on Match {
       queue

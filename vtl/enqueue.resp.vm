@@ -12,7 +12,7 @@ $util.quiet($extensions.setSubscriptionFilter(
           {
             "fieldName": "playerIds",
             "operator": "contains",
-            "value": $ctx.stash.user
+            "value": $ctx.stash.user.id
           }
         ]
       }
@@ -22,7 +22,7 @@ $util.quiet($extensions.setSubscriptionFilter(
 
 #if ($util.isNull($ctx.result) || $ctx.error)
   $util.log.error({
-    "user": $ctx.stash.user,
+    "user": $ctx.stash.user.id,
     "function": $function,
     "code": "Failure",
     "error": $ctx.error

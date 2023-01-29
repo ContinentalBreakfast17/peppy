@@ -62,14 +62,14 @@ func (cfg ApiConfig) New(ctx common.TfContext) api {
 	}.new(common.SimpleContext(ctx.Scope, ctx.Id+"_authorizer", ctx.Provider))
 
 	role := appsyncRoleConfig{
-		name:                jsii.String(*cfg.Name + "-appsync"),
-		path:                cfg.IamPath,
-		kmsWritePolicy:      cfg.KmsWritePolicy,
-		queues:              cfg.Queues.toList(),
-		functionsIpLookup:   cfg.FunctionsIpLookup,
-		tablesHealthcheck:   cfg.TablesHealthcheck,
-		tablesUser:          tables.userTableIds(),
-		tablesIpCache:       tables.ipCacheTableIds(),
+		name:              jsii.String(*cfg.Name + "-appsync"),
+		path:              cfg.IamPath,
+		kmsWritePolicy:    cfg.KmsWritePolicy,
+		queues:            cfg.Queues.toList(),
+		functionsIpLookup: cfg.FunctionsIpLookup,
+		tablesHealthcheck: cfg.TablesHealthcheck,
+		tablesUser:        tables.userTableIds(),
+		tablesIpCache:     tables.ipCacheTableIds(),
 	}.new(common.SimpleContext(ctx.Scope, ctx.Id+"_appsync_role", ctx.Provider))
 
 	cert := appsyncCertConfig{

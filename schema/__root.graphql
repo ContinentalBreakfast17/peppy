@@ -15,7 +15,7 @@ type Mutation @aws_iam {
 
 type Subscription @aws_iam @aws_lambda {
   healthcheck(id: ID!): HealthNotification @aws_iam @aws_subscribe(mutations: ["publishHealth"])
-  joinUnrankedSoloQueue(userId: String!): QueueNotification @aws_subscribe(mutations: ["publishMatch"])
+  joinUnrankedSoloQueue(config: PlayerConfigInput!): QueueNotification @aws_subscribe(mutations: ["publishMatch"])
 }
 
 type HealthNotification @aws_iam @aws_lambda {
@@ -37,12 +37,25 @@ type Match @aws_iam @aws_lambda {
 
 type Player @aws_iam @aws_lambda {
   userId: String!
-  # username: String!
+  info: PlayerInfo!
   ip: AWSIPAddress!
+  # todo: get config in here
+}
+
+type PlayerInfo @aws_iam @aws_lambda {
+  name: String!
 }
 
 input PlayerInput {
   userId: String!
-  # username: String!
+  info: PlayerInfoInput!
   ip: AWSIPAddress!
+}
+
+input PlayerInfoInput {
+  name: String!
+}
+
+input PlayerConfigInput {
+  forceLanIp: String
 }
